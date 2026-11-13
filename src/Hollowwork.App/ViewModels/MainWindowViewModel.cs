@@ -43,6 +43,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     private string _countLabel = "0 FILES";
     private string _statusLabel = "READY";
     private WorkspaceMode _mode = WorkspaceMode.Archive;
+    private PatchItemViewModel? _selectedPatch;
     private string _previewHeader = "NO FILE SELECTED";
     private string _previewText = string.Empty;
     private string _planSummary = "0 FILES · 0 CHANGES";
@@ -196,6 +197,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
             OnPropertyChanged(nameof(ShowExplorer));
             OnPropertyChanged(nameof(ShowPreview));
             OnPropertyChanged(nameof(ShowPatches));
+            OnPropertyChanged(nameof(ShowChronicle));
             OnPropertyChanged(nameof(ShowSettings));
             OnPropertyChanged(nameof(PatchColumn));
             OnPropertyChanged(nameof(PatchColumnSpan));
@@ -212,7 +214,27 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 
     public bool ShowPreview => _mode == WorkspaceMode.Archive;
 
-    public bool ShowPatches => _mode != WorkspaceMode.Settings;
+    public bool ShowPatches => _mode == WorkspaceMode.Archive;
+
+    public bool ShowChronicle => _mode == WorkspaceMode.Patches;
+
+    public PatchItemViewModel? SelectedPatch
+    {
+        get => _selectedPatch;
+        set
+        {
+            if (ReferenceEquals(_selectedPatch, value))
+            {
+                return;
+            }
+
+            _selectedPatch = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(HasSelectedPatch));
+        }
+    }
+
+    public bool HasSelectedPatch => _selectedPatch is not null;
 
     public bool ShowSettings => _mode == WorkspaceMode.Settings;
 
@@ -591,6 +613,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
             }
 
             OnPropertyChanged(nameof(SelectionLabel));
+            SelectedPatch ??= Patches.FirstOrDefault();
         }
         catch (Exception exception)
         {

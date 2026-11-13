@@ -108,6 +108,9 @@ public partial class MainWindow : Window
     private void OnSettingsModeClicked(object? sender, RoutedEventArgs e) =>
         _viewModel.SetMode(WorkspaceMode.Settings);
 
+    private void OnExplorerClicked(object? sender, RoutedEventArgs e) =>
+        _viewModel.SetMode(WorkspaceMode.Archive);
+
     private void OnOpenDataFolderClicked(object? sender, RoutedEventArgs e) => OpenPath(AppPaths.DataRoot);
 
     private static void OpenPath(string path)

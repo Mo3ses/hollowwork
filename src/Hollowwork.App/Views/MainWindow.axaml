@@ -12,6 +12,49 @@
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource VoidGradient}">
 
+    <Window.Resources>
+        <DataTemplate x:Key="ParameterTemplate" x:DataType="vm:PatchParameterViewModel">
+
+                                                            <StackPanel Margin="0,2,0,0" Spacing="2">
+                                                                <StackPanel Orientation="Horizontal" Spacing="6"
+                                                                            IsVisible="{Binding IsColor}">
+                                                                    <Button Width="44" Height="26" Padding="0"
+                                                                            Background="Transparent"
+                                                                            HorizontalContentAlignment="Stretch"
+                                                                            VerticalContentAlignment="Stretch"
+                                                                            BorderBrush="{DynamicResource LineBrush}"
+                                                                            BorderThickness="1"
+                                                                            ToolTip.Tip="Pick color">
+                                                                        <Grid>
+                                                                            <Border Background="#2A2A2A" />
+                                                                            <Border Background="{Binding PreviewBrush}" />
+                                                                        </Grid>
+                                                                        <Button.Flyout>
+                                                                            <Flyout Placement="BottomEdgeAlignedLeft">
+                                                                                <cp:ColorView Color="{Binding Color, Mode=TwoWay}"
+                                                                                              Width="320" Height="380"
+                                                                                              IsAlphaEnabled="True"
+                                                                                              IsAlphaVisible="True" />
+                                                                            </Flyout>
+                                                                        </Button.Flyout>
+                                                                    </Button>
+                                                                    <TextBox Text="{Binding ColorText, Mode=TwoWay}"
+                                                                             Width="96" FontSize="11" />
+                                                                </StackPanel>
+                                                                <Grid ColumnDefinitions="*,Auto"
+                                                                      IsVisible="{Binding !IsColor}">
+                                                                    <Slider MaxWidth="360" Minimum="{Binding Min}" Maximum="{Binding Max}"
+                                                                            TickFrequency="{Binding Step}" IsSnapToTickEnabled="True"
+                                                                            Value="{Binding Value, Mode=TwoWay}" />
+                                                                    <TextBlock Grid.Column="1" Classes="mono faint"
+                                                                               Text="{Binding Display}" Margin="8,0,0,0"
+                                                                               VerticalAlignment="Center" />
+                                                                </Grid>
+                                                            </StackPanel>
+                                                        
+        </DataTemplate>
+    </Window.Resources>
+
     <Grid RowDefinitions="46,*,26">
 
         <!-- Title bar -->
@@ -184,48 +227,8 @@
                                             <StackPanel Grid.Column="1" Spacing="3">
                                                 <TextBlock Text="{Binding Name}" />
                                                 <TextBlock Classes="mono faint" Text="{Binding Meta}" TextTrimming="CharacterEllipsis" />
-                                                <ItemsControl ItemsSource="{Binding Parameters}" Margin="0,4,0,0">
-                                                    <ItemsControl.ItemTemplate>
-                                                        <DataTemplate x:DataType="vm:PatchParameterViewModel">
-                                                            <StackPanel Margin="0,2,0,0" Spacing="2">
-                                                                <StackPanel Orientation="Horizontal" Spacing="6"
-                                                                            IsVisible="{Binding IsColor}">
-                                                                    <Button Width="44" Height="26" Padding="0"
-                                                                            Background="Transparent"
-                                                                            HorizontalContentAlignment="Stretch"
-                                                                            VerticalContentAlignment="Stretch"
-                                                                            BorderBrush="{DynamicResource LineBrush}"
-                                                                            BorderThickness="1"
-                                                                            ToolTip.Tip="Pick color">
-                                                                        <Grid>
-                                                                            <Border Background="#2A2A2A" />
-                                                                            <Border Background="{Binding PreviewBrush}" />
-                                                                        </Grid>
-                                                                        <Button.Flyout>
-                                                                            <Flyout Placement="BottomEdgeAlignedLeft">
-                                                                                <cp:ColorView Color="{Binding Color, Mode=TwoWay}"
-                                                                                              Width="320" Height="380"
-                                                                                              IsAlphaEnabled="True"
-                                                                                              IsAlphaVisible="True" />
-                                                                            </Flyout>
-                                                                        </Button.Flyout>
-                                                                    </Button>
-                                                                    <TextBox Text="{Binding ColorText, Mode=TwoWay}"
-                                                                             Width="96" FontSize="11" />
-                                                                </StackPanel>
-                                                                <Grid ColumnDefinitions="*,Auto"
-                                                                      IsVisible="{Binding !IsColor}">
-                                                                    <Slider MaxWidth="360" Minimum="{Binding Min}" Maximum="{Binding Max}"
-                                                                            TickFrequency="{Binding Step}" IsSnapToTickEnabled="True"
-                                                                            Value="{Binding Value, Mode=TwoWay}" />
-                                                                    <TextBlock Grid.Column="1" Classes="mono faint"
-                                                                               Text="{Binding Display}" Margin="8,0,0,0"
-                                                                               VerticalAlignment="Center" />
-                                                                </Grid>
-                                                            </StackPanel>
-                                                        </DataTemplate>
-                                                    </ItemsControl.ItemTemplate>
-                                                </ItemsControl>
+                                                <ItemsControl ItemsSource="{Binding Parameters}" Margin="0,4,0,0"
+                                                              ItemTemplate="{StaticResource ParameterTemplate}" />
                                                 <Border IsVisible="{Binding IsMinimap}" Height="130" Margin="0,8,0,2"
                                                         BorderBrush="{DynamicResource LineBrush}" BorderThickness="1">
                                                     <controls:MinimapPreview MaxWidth="600" HorizontalAlignment="Left"
@@ -261,6 +264,99 @@
                     </Border>
                 </Grid>
             </Border>
+            <!-- Chronicle -->
+            <Border Grid.Column="1" Grid.ColumnSpan="3" IsVisible="{Binding ShowChronicle}"
+                    Background="{DynamicResource VoidGradient}">
+                <Grid ColumnDefinitions="420,*">
+                    <Border Grid.Column="0" BorderBrush="{DynamicResource LineSoftBrush}" BorderThickness="0,0,1,0"
+                            Padding="30,22,22,22">
+                        <Grid RowDefinitions="Auto,Auto,*">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <StackPanel Spacing="8">
+                                    <TextBlock Classes="chronicle" Text="PATCHES" />
+                                    <Border Height="1" Width="160" Background="{DynamicResource SoulDimBrush}"
+                                            HorizontalAlignment="Left" />
+                                </StackPanel>
+                                <Button Grid.Column="1" Classes="ghost" Content="EXPLORER" FontSize="10"
+                                        VerticalAlignment="Top" Click="OnExplorerClicked" />
+                            </Grid>
+                            <TextBlock Grid.Row="1" Classes="mono faint" Text="{Binding SelectionLabel}"
+                                       Margin="0,12,0,10" />
+                            <ListBox Grid.Row="2" ItemsSource="{Binding Patches}" SelectedItem="{Binding SelectedPatch}"
+                                     Background="Transparent" BorderThickness="0">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:PatchItemViewModel">
+                                        <Grid ColumnDefinitions="Auto,*,Auto" Height="34">
+                                            <ToggleButton Classes="seal" IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                          VerticalAlignment="Center">
+                                                <Path Data="M7,0 L14,7 L7,14 L0,7 Z" Fill="{Binding SealFill}"
+                                                      Stroke="{Binding SealStroke}" StrokeThickness="1"
+                                                      Width="13" Height="13" Stretch="Fill" />
+                                            </ToggleButton>
+                                            <TextBlock Grid.Column="1" Text="{Binding Name}" Margin="10,0,0,0"
+                                                       VerticalAlignment="Center" FontSize="12" />
+                                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4"
+                                                        VerticalAlignment="Center">
+                                                <TextBlock Classes="mono faint" Text="{Binding CompactSummary}" />
+                                                <Border Width="10" Height="10" Background="{Binding ExploredBrush}"
+                                                        IsVisible="{Binding IsMinimap}" BorderBrush="{DynamicResource LineBrush}"
+                                                        BorderThickness="1" />
+                                                <Border Width="10" Height="10" Background="{Binding EdgeBrush}"
+                                                        IsVisible="{Binding IsMinimap}" BorderBrush="{DynamicResource LineBrush}"
+                                                        BorderThickness="1" />
+                                                <Border Width="10" Height="10" Background="{Binding UnexploredBrush}"
+                                                        IsVisible="{Binding IsMinimap}" BorderBrush="{DynamicResource LineBrush}"
+                                                        BorderThickness="1" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                            <Canvas Grid.RowSpan="3" IsHitTestVisible="False">
+                                <Path Data="M0,0 L58,0 M0,0 L44,44 M0,0 L0,58 M16,0 C16,12 0,12 0,16 M32,0 C32,22 0,22 0,32"
+                                      Stroke="{DynamicResource LineBrush}" StrokeThickness="1" Opacity="0.7" />
+                                <Path Data="M420,560 C440,530 460,550 480,520"
+                                      Stroke="{DynamicResource SoulDimBrush}" StrokeThickness="1" Opacity="0.5" />
+                            </Canvas>
+                        </Grid>
+                    </Border>
+
+                    <Border Grid.Column="1" Padding="36,26">
+                        <Grid RowDefinitions="Auto,*,Auto" IsVisible="{Binding HasSelectedPatch}">
+                            <StackPanel Spacing="6">
+                                <TextBlock Classes="display" Text="{Binding SelectedPatch.Name}" FontSize="26" />
+                                <TextBlock Classes="dim" Text="{Binding SelectedPatch.Description}" TextWrapping="Wrap" />
+                                <TextBlock Classes="eyebrow" Text="{Binding SelectedPatch.Meta}" Margin="0,4,0,0" />
+                            </StackPanel>
+                            <ScrollViewer Grid.Row="1" Margin="0,18">
+                                <StackPanel Spacing="16">
+                                    <ItemsControl ItemsSource="{Binding SelectedPatch.Parameters}"
+                                                  ItemTemplate="{StaticResource ParameterTemplate}" />
+                                    <Border IsVisible="{Binding SelectedPatch.IsMinimap}" Height="150" MaxWidth="520"
+                                            HorizontalAlignment="Left" BorderBrush="{DynamicResource LineBrush}"
+                                            BorderThickness="1">
+                                        <controls:MinimapPreview ExploredBrush="{Binding SelectedPatch.ExploredBrush}"
+                                                                 EdgeBrush="{Binding SelectedPatch.EdgeBrush}"
+                                                                 UnexploredBrush="{Binding SelectedPatch.UnexploredBrush}" />
+                                    </Border>
+                                </StackPanel>
+                            </ScrollViewer>
+                            <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
+                                <StackPanel Spacing="2">
+                                    <TextBlock Classes="mono faint" Text="{Binding PlanSummary}" />
+                                    <TextBlock Classes="mono faint" Text="{Binding BackupNotice}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                    <Button Content="PLAN" Click="OnPlanClicked" />
+                                    <Button Classes="primary" Content="{Binding ApplyLabel}"
+                                            IsEnabled="{Binding CanApply}" Click="OnApplyClicked" />
+                                </StackPanel>
+                            </Grid>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+
             <!-- Settings -->
             <Border Grid.Column="1" Grid.ColumnSpan="3" IsVisible="{Binding ShowSettings}"
                     Background="{DynamicResource VoidGradient}">

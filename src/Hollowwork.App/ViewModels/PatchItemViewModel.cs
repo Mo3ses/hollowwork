@@ -8,6 +8,10 @@ namespace Hollowwork.App.ViewModels;
 
 public sealed class PatchItemViewModel : INotifyPropertyChanged
 {
+    private static readonly IBrush SealOn = new SolidColorBrush(Color.Parse("#7FE0D0"));
+    private static readonly IBrush StrokeOn = new SolidColorBrush(Color.Parse("#7FE0D0"));
+    private static readonly IBrush StrokeOff = new SolidColorBrush(Color.Parse("#397A73"));
+
     private bool _isSelected;
 
     public event Action? ParameterChanged;
@@ -52,6 +56,16 @@ public sealed class PatchItemViewModel : INotifyPropertyChanged
 
     public bool IsMinimap => Definition.Id == "poe1.minimap-colors";
 
+    public IBrush SealFill => _isSelected ? SealOn : Brushes.Transparent;
+
+    public IBrush SealStroke => _isSelected ? StrokeOn : StrokeOff;
+
+    public string CompactSummary => IsMinimap
+        ? string.Empty
+        : Parameters.Count > 0
+            ? Parameters[0].Display
+            : string.Empty;
+
     public IBrush? ExploredBrush => BrushFor("explored");
 
     public IBrush? EdgeBrush => BrushFor("edge");
@@ -72,6 +86,8 @@ public sealed class PatchItemViewModel : INotifyPropertyChanged
 
             _isSelected = value;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsSelected)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SealFill)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SealStroke)));
         }
     }
 
