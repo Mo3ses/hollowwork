@@ -9,11 +9,11 @@ public partial class MainWindow : Window
 {
     private readonly MainWindowViewModel _viewModel = new();
 
-    public MainWindow() : this(null)
+    public MainWindow() : this(null, false)
     {
     }
 
-    public MainWindow(string? initialPath)
+    public MainWindow(string? initialPath, bool openBackups = false)
     {
         InitializeComponent();
         DataContext = _viewModel;
@@ -22,6 +22,11 @@ public partial class MainWindow : Window
         if (!string.IsNullOrWhiteSpace(initialPath))
         {
             Opened += async (_, _) => await _viewModel.OpenAsync(initialPath);
+        }
+
+        if (openBackups)
+        {
+            Opened += async (_, _) => await ShowBackupsAsync();
         }
     }
 
@@ -80,6 +85,21 @@ public partial class MainWindow : Window
         if (FileList.SelectedItem is ArchiveFileItem item)
         {
             await _viewModel.SelectFileAsync(item.Path);
+        }
+    }
+
+    private async void OnBackupClicked(object? sender, RoutedEventArgs e) => await ShowBackupsAsync();
+
+    private async Task ShowBackupsAsync()
+    {
+        var inputPath = _viewModel.CurrentInputPath;
+        var window = new BackupWindow(_viewModel.RestoreTarget, _viewModel.TargetKind);
+        var restored = await window.ShowDialog<bool>(this);
+
+        if (restored && inputPath is not null)
+        {
+            _viewModel.CloseArchive();
+            await _viewModel.OpenAsync(inputPath);
         }
     }
 

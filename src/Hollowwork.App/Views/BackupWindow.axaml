@@ -1,0 +1,53 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Hollowwork.App.ViewModels"
+        xmlns:backup="using:Hollowwork.Core.Backup"
+        x:Class="Hollowwork.App.Views.BackupWindow"
+        x:DataType="vm:BackupWindowViewModel"
+        Title="Backups"
+        Width="880" Height="560"
+        MinWidth="720" MinHeight="420"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource VoidGradient}">
+
+    <Grid RowDefinitions="46,*,Auto">
+
+        <Border Grid.Row="0" Background="{DynamicResource DeepBrush}"
+                BorderBrush="{DynamicResource LineSoftBrush}" BorderThickness="0,0,0,1">
+            <Grid ColumnDefinitions="Auto,*,Auto" Margin="18,0">
+                <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                    <Path Data="M0,4 L4,0 L8,4 L4,8 Z" Fill="{DynamicResource SoulBrush}"
+                          Width="9" Height="9" Stretch="Fill" />
+                    <TextBlock Classes="brand" Text="BACKUPS" />
+                </StackPanel>
+                <TextBlock Grid.Column="1" Classes="mono faint" Margin="18,0,0,0"
+                           VerticalAlignment="Center" Text="{Binding TargetLabel}"
+                           TextTrimming="CharacterEllipsis" />
+                <Button Grid.Column="2" Classes="ghost" Content="CLOSE" Click="OnCloseClicked" />
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="1" BorderBrush="{DynamicResource LineSoftBrush}" BorderThickness="0,0,0,1">
+            <ListBox ItemsSource="{Binding Entries}" SelectedItem="{Binding Selected}"
+                     Background="Transparent" BorderThickness="0" Padding="10">
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="backup:BackupEntry">
+                        <StackPanel Spacing="3" Margin="4,6">
+                            <TextBlock Text="{Binding Display}" />
+                            <TextBlock Classes="mono faint" Text="{Binding Source}" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Border>
+
+        <Border Grid.Row="2" Background="{DynamicResource DeepBrush}" Padding="18,12">
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Grid.Column="0" Classes="mono faint" VerticalAlignment="Center"
+                           Text="{Binding Status}" TextTrimming="CharacterEllipsis" />
+                <Button Grid.Column="1" Classes="primary" Content="{Binding RestoreLabel}"
+                        IsEnabled="{Binding CanRestore}" Click="OnRestoreClicked" />
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
