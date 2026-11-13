@@ -207,6 +207,21 @@
                                                         </DataTemplate>
                                                     </ItemsControl.ItemTemplate>
                                                 </ItemsControl>
+                                                <Border IsVisible="{Binding IsMinimap}" Height="120" Margin="0,8,0,2"
+                                                        Background="{Binding UnexploredBrush}"
+                                                        BorderBrush="{DynamicResource LineBrush}" BorderThickness="1">
+                                                    <Canvas>
+                                                        <Border Canvas.Left="14" Canvas.Top="18" Width="70" Height="48"
+                                                                Background="{Binding ExploredBrush}"
+                                                                BorderBrush="{Binding EdgeBrush}" BorderThickness="3" />
+                                                        <Border Canvas.Left="78" Canvas.Top="60" Width="58" Height="40"
+                                                                Background="{Binding ExploredBrush}"
+                                                                BorderBrush="{Binding EdgeBrush}" BorderThickness="3" />
+                                                        <Border Canvas.Left="128" Canvas.Top="22" Width="52" Height="42"
+                                                                Background="{Binding ExploredBrush}"
+                                                                BorderBrush="{Binding EdgeBrush}" BorderThickness="3" />
+                                                    </Canvas>
+                                                </Border>
                                             </StackPanel>
                                             <Border Grid.Column="2" BorderBrush="{DynamicResource LineBrush}"
                                                     BorderThickness="1" CornerRadius="2" Padding="5,2">

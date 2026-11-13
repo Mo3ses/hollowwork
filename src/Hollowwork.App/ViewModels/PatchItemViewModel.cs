@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using Avalonia.Media;
 using Hollowwork.Patches;
 
 namespace Hollowwork.App.ViewModels;
@@ -25,6 +26,13 @@ public sealed class PatchItemViewModel : INotifyPropertyChanged
                 {
                     ParameterChanged?.Invoke();
                 }
+
+                if (args.PropertyName == nameof(PatchParameterViewModel.PreviewBrush))
+                {
+                    OnPropertyChanged(nameof(ExploredBrush));
+                    OnPropertyChanged(nameof(EdgeBrush));
+                    OnPropertyChanged(nameof(UnexploredBrush));
+                }
             };
             Parameters.Add(viewModel);
         }
@@ -42,6 +50,14 @@ public sealed class PatchItemViewModel : INotifyPropertyChanged
 
     public ObservableCollection<PatchParameterViewModel> Parameters { get; } = [];
 
+    public bool IsMinimap => Definition.Id == "poe1.minimap-colors";
+
+    public IBrush? ExploredBrush => BrushFor("explored");
+
+    public IBrush? EdgeBrush => BrushFor("edge");
+
+    public IBrush? UnexploredBrush => BrushFor("unexplored");
+
     public string Tag => Definition.Game.ToUpperInvariant();
 
     public bool IsSelected
@@ -58,6 +74,12 @@ public sealed class PatchItemViewModel : INotifyPropertyChanged
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsSelected)));
         }
     }
+
+    private IBrush? BrushFor(string key) =>
+        Parameters.FirstOrDefault(parameter => parameter.Key == key)?.PreviewBrush;
+
+    private void OnPropertyChanged([CallerMemberName] string? name = null) =>
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 
     public IReadOnlyDictionary<string, string> Values() =>
         Parameters.ToDictionary(parameter => parameter.Key, parameter => parameter.Formatted);
