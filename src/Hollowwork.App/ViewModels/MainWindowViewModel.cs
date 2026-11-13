@@ -498,7 +498,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 
         try
         {
-            foreach (var definition in PatchLoader.LoadDirectory(directory))
+            foreach (var definition in PatchLoader.LoadDirectory(directory)
+                         .OrderByDescending(item => item.Parameters is { Count: > 0 })
+                         .ThenBy(item => item.Name, StringComparer.OrdinalIgnoreCase))
             {
                 var item = new PatchItemViewModel(definition);
                 item.PropertyChanged += (_, args) =>
