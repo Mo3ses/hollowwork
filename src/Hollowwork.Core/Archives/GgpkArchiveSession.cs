@@ -38,11 +38,12 @@ public sealed class GgpkArchiveSession : IArchiveSession
             return [];
         }
 
+        var filterByExtension = extensions.Count > 0;
         var results = new List<string>();
         foreach (var (_, relative) in TreeNode.RecurseFiles(directory))
         {
             var path = Combine(normalizedRoot, relative);
-            if (HasExtension(path, extensions))
+            if (!filterByExtension || HasExtension(path, extensions))
             {
                 results.Add(path);
             }

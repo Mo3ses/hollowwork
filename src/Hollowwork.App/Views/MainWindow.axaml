@@ -1,6 +1,8 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Hollowwork.App.ViewModels"
         x:Class="Hollowwork.App.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
         Title="Hollowwork"
         Icon="/Assets/icon.png"
         Width="1360" Height="820"
@@ -26,12 +28,19 @@
                         Background="{DynamicResource LineBrush}" VerticalAlignment="Center" />
 
                 <TextBlock Grid.Column="2" Classes="mono faint" VerticalAlignment="Center"
-                           Text="NO ARCHIVE OPEN · OPEN CONTENT.GGPK OR _.INDEX.BIN TO BEGIN" />
+                           Text="{Binding ArchiveLabel}" TextTrimming="CharacterEllipsis" />
 
                 <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                     <Button Classes="ghost" Content="DOCS" />
                     <Button Classes="ghost" Content="SETTINGS" />
-                    <Button Classes="primary" Content="OPEN ARCHIVE" />
+                    <Button Classes="primary" Content="OPEN">
+                        <Button.Flyout>
+                            <MenuFlyout>
+                                <MenuItem Header="GGPK file…" Click="OnOpenGgpkClicked" />
+                                <MenuItem Header="Bundles2 folder…" Click="OnOpenBundlesClicked" />
+                            </MenuFlyout>
+                        </Button.Flyout>
+                    </Button>
                 </StackPanel>
             </Grid>
         </Border>
@@ -72,57 +81,69 @@
 
             <!-- Explorer -->
             <Border Grid.Column="1" Classes="panel">
-                <Grid RowDefinitions="Auto,Auto,*,Auto" Margin="14,14,14,10">
+                <Grid RowDefinitions="Auto,Auto,Auto,180,Auto,Auto,*" Margin="14,14,14,10">
                     <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
                         <TextBlock Grid.Column="0" Classes="eyebrow" Text="EXPLORER" />
-                        <TextBlock Grid.Column="1" Classes="mono faint" Text="0 PATHS" />
+                        <TextBlock Grid.Column="1" Classes="mono faint" Text="{Binding CountLabel}" />
                     </Grid>
 
                     <TextBox Grid.Row="1" Classes="search" PlaceholderText="Filter paths…" Margin="0,12,0,10" />
 
-                    <TreeView Grid.Row="2">
-                        <TreeViewItem Header="metadata" IsExpanded="True">
-                            <TreeViewItem Header="characters" />
-                            <TreeViewItem Header="environmentsettings" />
-                            <TreeViewItem Header="monsters" />
-                            <TreeViewItem Header="particles" />
-                        </TreeViewItem>
-                        <TreeViewItem Header="art">
-                            <TreeViewItem Header="textures" />
-                            <TreeViewItem Header="models" />
-                        </TreeViewItem>
-                        <TreeViewItem Header="audio" />
-                        <TreeViewItem Header="data" />
-                    </TreeView>
+                    <TextBlock Grid.Row="2" Classes="eyebrow" Text="DIRECTORIES" Margin="0,0,0,6" />
+
+                    <ListBox Grid.Row="3" x:Name="DirectoryList"
+                             ItemsSource="{Binding Directories}"
+                             SelectionChanged="OnDirectorySelected"
+                             Background="Transparent" BorderThickness="0" />
+
+                    <Border Grid.Row="4" Classes="rule" Margin="0,10" />
+
+                    <TextBlock Grid.Row="5" Classes="eyebrow" Text="FILES" Margin="0,0,0,6" />
+
+                    <ListBox Grid.Row="6" x:Name="FileList"
+                             ItemsSource="{Binding Files}"
+                             SelectionChanged="OnFileSelected"
+                             Background="Transparent" BorderThickness="0">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:ArchiveFileItem">
+                                <TextBlock Text="{Binding Name}" FontSize="12" />
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
                 </Grid>
             </Border>
 
-            <!-- Canvas / inspector -->
-            <Grid Grid.Column="2" RowDefinitions="Auto,*">
+            <!-- Canvas / preview -->
+            <Grid Grid.Column="2" RowDefinitions="Auto,Auto,*">
                 <Border Grid.Row="0" Background="{DynamicResource DeepBrush}"
                         BorderBrush="{DynamicResource LineSoftBrush}" BorderThickness="0,0,0,1"
                         Height="34">
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
+                    <StackPanel Orientation="Horizontal">
                         <Border Padding="16,0" BorderBrush="{DynamicResource SoulBrush}" BorderThickness="0,0,0,2">
-                            <TextBlock Classes="mono" Text="WELCOME" Foreground="{DynamicResource SoulBrush}"
+                            <TextBlock Classes="mono" Text="PREVIEW" Foreground="{DynamicResource SoulBrush}"
                                        VerticalAlignment="Center" />
-                        </Border>
-                        <Border Padding="16,0" BorderBrush="Transparent" BorderThickness="0,0,0,2">
-                            <TextBlock Classes="mono faint" Text="PREVIEW" VerticalAlignment="Center" />
                         </Border>
                     </StackPanel>
                 </Border>
 
-                <Grid Grid.Row="1" Background="{DynamicResource VoidGradient}">
-                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="14">
-                        <Border Width="88" Height="1" Background="{DynamicResource SoulDimBrush}" />
-                        <TextBlock Classes="display" Text="Nothing open." HorizontalAlignment="Center" />
-                        <TextBlock Classes="dim" Text="Pick an archive to inspect its contents."
-                                   HorizontalAlignment="Center" />
-                        <TextBlock Classes="eyebrow" Text="GGPK · BUNDLE INDEX" HorizontalAlignment="Center" />
-                        <Border Width="88" Height="1" Background="{DynamicResource LineBrush}" />
-                    </StackPanel>
-                </Grid>
+                <Border Grid.Row="1" Padding="18,10" Background="{DynamicResource DeepBrush}"
+                        BorderBrush="{DynamicResource LineSoftBrush}" BorderThickness="0,0,0,1">
+                    <TextBlock Classes="mono faint" Text="{Binding PreviewHeader}"
+                               TextTrimming="CharacterEllipsis" />
+                </Border>
+
+                <TextBox Grid.Row="2"
+                         Text="{Binding PreviewText, Mode=OneWay}"
+                         IsReadOnly="True"
+                         AcceptsReturn="True"
+                         FontFamily="{DynamicResource MonoFont}"
+                         FontSize="12"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         Padding="18,12"
+                         ScrollViewer.VerticalScrollBarVisibility="Auto"
+                         ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                         TextWrapping="NoWrap" />
             </Grid>
 
             <!-- Patch drawer -->
@@ -223,11 +244,11 @@
                 <TextBlock Grid.Column="0" Classes="mono" Foreground="{DynamicResource MossBrush}"
                            VerticalAlignment="Center" Text="OFFLINE" />
                 <TextBlock Grid.Column="1" Classes="mono faint" Margin="18,0,0,0"
-                           VerticalAlignment="Center" Text="NO NETWORK ACCESS" />
+                           VerticalAlignment="Center" Text="{Binding StatusLabel}" />
                 <TextBlock Grid.Column="2" Classes="mono faint" Margin="18,0,0,0"
-                           VerticalAlignment="Center" Text="ARCHIVE —" />
+                           VerticalAlignment="Center" Text="{Binding KindLabel}" />
                 <TextBlock Grid.Column="3" Classes="mono faint" Margin="0,0,18,0"
-                           VerticalAlignment="Center" Text="0 FILES" />
+                           VerticalAlignment="Center" Text="{Binding CountLabel}" />
                 <TextBlock Grid.Column="4" Classes="mono faint"
                            VerticalAlignment="Center" Text="v0.1.0-dev · LINUX" />
             </Grid>

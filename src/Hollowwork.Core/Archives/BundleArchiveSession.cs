@@ -52,6 +52,12 @@ public sealed class BundleArchiveSession : IArchiveSession
             .ToArray()!;
 
         var normalizedRoot = Normalize(root);
+        if (normalizedRoot.Length == 0 && extensions.Count == 0)
+        {
+            return _paths;
+        }
+
+        var filterByExtension = extensions.Count > 0;
         var results = new List<string>();
 
         foreach (var path in _paths)
@@ -59,6 +65,12 @@ public sealed class BundleArchiveSession : IArchiveSession
             if (normalizedRoot.Length > 0
                 && !path.StartsWith(normalizedRoot + "/", StringComparison.OrdinalIgnoreCase))
             {
+                continue;
+            }
+
+            if (!filterByExtension)
+            {
+                results.Add(path);
                 continue;
             }
 

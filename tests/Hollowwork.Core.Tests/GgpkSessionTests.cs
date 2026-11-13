@@ -25,6 +25,7 @@ public class GgpkSessionTests
             {
                 Assert.Equal(ArchiveKind.Ggpk, session.Kind);
                 Assert.Equal(["metadata/environmentsettings/a.env"], session.ListFiles("metadata/environmentsettings", [".env"]));
+                Assert.Equal(2, session.ListFiles(string.Empty, []).Count);
                 Assert.True(session.TryRead("metadata/environmentsettings/a.env", out var bytes));
                 Assert.Equal("fog", Encoding.UTF8.GetString(bytes));
 
