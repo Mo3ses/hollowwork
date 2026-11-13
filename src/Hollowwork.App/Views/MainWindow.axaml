@@ -2,6 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:Hollowwork.App.ViewModels"
         xmlns:cp="using:Avalonia.Controls"
+        xmlns:controls="using:Hollowwork.App.Controls"
         x:Class="Hollowwork.App.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Title="Hollowwork"
@@ -189,10 +190,16 @@
                                                                 <StackPanel Orientation="Horizontal" Spacing="6"
                                                                             IsVisible="{Binding IsColor}">
                                                                     <Button Width="44" Height="26" Padding="0"
-                                                                            Background="{Binding PreviewBrush}"
+                                                                            Background="Transparent"
+                                                                            HorizontalContentAlignment="Stretch"
+                                                                            VerticalContentAlignment="Stretch"
                                                                             BorderBrush="{DynamicResource LineBrush}"
                                                                             BorderThickness="1"
                                                                             ToolTip.Tip="Pick color">
+                                                                        <Grid>
+                                                                            <Border Background="#2A2A2A" />
+                                                                            <Border Background="{Binding PreviewBrush}" />
+                                                                        </Grid>
                                                                         <Button.Flyout>
                                                                             <Flyout Placement="BottomEdgeAlignedLeft">
                                                                                 <cp:ColorView Color="{Binding Color, Mode=TwoWay}"
@@ -218,20 +225,12 @@
                                                         </DataTemplate>
                                                     </ItemsControl.ItemTemplate>
                                                 </ItemsControl>
-                                                <Border IsVisible="{Binding IsMinimap}" Height="120" Margin="0,8,0,2"
-                                                        Background="{Binding UnexploredBrush}"
+                                                <Border IsVisible="{Binding IsMinimap}" Height="130" Margin="0,8,0,2"
                                                         BorderBrush="{DynamicResource LineBrush}" BorderThickness="1">
-                                                    <Canvas>
-                                                        <Border Canvas.Left="14" Canvas.Top="18" Width="70" Height="48"
-                                                                Background="{Binding ExploredBrush}"
-                                                                BorderBrush="{Binding EdgeBrush}" BorderThickness="3" />
-                                                        <Border Canvas.Left="78" Canvas.Top="60" Width="58" Height="40"
-                                                                Background="{Binding ExploredBrush}"
-                                                                BorderBrush="{Binding EdgeBrush}" BorderThickness="3" />
-                                                        <Border Canvas.Left="128" Canvas.Top="22" Width="52" Height="42"
-                                                                Background="{Binding ExploredBrush}"
-                                                                BorderBrush="{Binding EdgeBrush}" BorderThickness="3" />
-                                                    </Canvas>
+                                                    <controls:MinimapPreview
+                                                        ExploredBrush="{Binding ExploredBrush}"
+                                                        EdgeBrush="{Binding EdgeBrush}"
+                                                        UnexploredBrush="{Binding UnexploredBrush}" />
                                                 </Border>
                                             </StackPanel>
                                             <Border Grid.Column="2" BorderBrush="{DynamicResource LineBrush}"
