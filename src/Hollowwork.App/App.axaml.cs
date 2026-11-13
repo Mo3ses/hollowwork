@@ -31,7 +31,7 @@ public partial class App : Application
                 }
             }
 
-            desktop.MainWindow = new MainWindow(initialPath, args.Contains("--backups"), initialFile);
+            desktop.MainWindow = new CompactWindow(initialPath);
         }
 
         base.OnFrameworkInitializationCompleted();
