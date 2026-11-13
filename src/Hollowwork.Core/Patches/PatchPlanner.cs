@@ -46,7 +46,10 @@ public sealed class PatchPlanner
                 cancellationToken.ThrowIfCancellationRequested();
 
                 var root = target.Root.Replace('\\', '/').Trim('/');
-                foreach (var path in archive.ListFiles(root, target.Extensions))
+                var paths = target.Files is { Count: > 0 }
+                    ? target.Files
+                    : archive.ListFiles(root, target.Extensions);
+                foreach (var path in paths)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
 

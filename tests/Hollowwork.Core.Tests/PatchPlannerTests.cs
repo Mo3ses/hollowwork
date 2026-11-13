@@ -114,6 +114,27 @@ public class PatchPlannerTests
     }
 
     [Fact]
+    public void Target_files_limits_the_scope()
+    {
+        using var archive = new MemoryArchive();
+        archive.AddText("metadata/characters/character.ot", "team = 1");
+        archive.AddText("metadata/characters/npc.ot", "team = 1");
+
+        var patch = new PatchDefinition(
+            "camera",
+            "Camera",
+            "test",
+            "poe1",
+            [new PatchTarget("metadata/characters", [".ot"], null, ["metadata/characters/character.ot"])],
+            [new PatchOperation("replace", "team = 1", "team = 1 zoom", "CreateCameraZoomNode")]);
+
+        var plan = new PatchPlanner().Plan(archive, [patch]);
+
+        var file = Assert.Single(plan.Files);
+        Assert.Equal("metadata/characters/character.ot", file.Path);
+    }
+
+    [Fact]
     public void Skips_operation_when_guard_is_present()
     {
         using var archive = new MemoryArchive();
