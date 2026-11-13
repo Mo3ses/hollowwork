@@ -11,7 +11,7 @@ public sealed record PlannedFile(
     string Path,
     string OriginalText,
     string UpdatedText,
-    bool HasBom,
+    TextEncodingKind Encoding,
     IReadOnlyList<OperationOutcome> Operations);
 
 public sealed record SkippedFile(string Path, string Reason);
@@ -72,13 +72,13 @@ public sealed class PatchPlanner
                             continue;
                         }
 
-                        if (!TextContent.TryDecode(bytes, out var text, out var hasBom))
+                        if (!TextContent.TryDecode(bytes, out var text, out var encoding))
                         {
                             skipped.Add(new SkippedFile(path, "not utf-8"));
                             continue;
                         }
 
-                        file = new WorkingFile(path, text, hasBom);
+                        file = new WorkingFile(path, text, encoding);
                         working.Add(path, file);
                     }
 
@@ -95,19 +95,19 @@ public sealed class PatchPlanner
         var planned = working.Values
             .Where(file => file.Current != file.Original)
             .OrderBy(file => file.Path, StringComparer.OrdinalIgnoreCase)
-            .Select(file => new PlannedFile(file.Path, file.Original, file.Current, file.HasBom, file.Outcomes))
+            .Select(file => new PlannedFile(file.Path, file.Original, file.Current, file.Encoding, file.Outcomes))
             .ToList();
 
         return new PatchPlan(planned, skipped);
     }
 
-    private sealed class WorkingFile(string path, string original, bool hasBom)
+    private sealed class WorkingFile(string path, string original, TextEncodingKind encoding)
     {
         public string Path { get; } = path;
 
         public string Original { get; } = original;
 
-        public bool HasBom { get; } = hasBom;
+        public TextEncodingKind Encoding { get; } = encoding;
 
         public string Current { get; set; } = original;
 
