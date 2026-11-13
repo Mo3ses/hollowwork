@@ -1,0 +1,18 @@
+{
+  "id": "poe1.remove-mtx",
+  "name": "Remove MTX effects",
+  "description": "Strips microtransaction particle and light effects.",
+  "game": "poe1",
+  "targets": [
+    { "root": "metadata/effects/microtransactions", "extensions": [".ao"] }
+  ],
+  "operations": [
+    { "type": "stripBlock", "from": "AttachedAnimatedObject" },
+    { "type": "stripBlock", "from": "EffectPack" },
+    { "type": "stripBlock", "from": "Lights" },
+    { "type": "stripBlock", "from": "ObjectHiding" },
+    { "type": "stripBlock", "from": "ParticleEffects" },
+    { "type": "stripBlock", "from": "SkinMesh" },
+    { "type": "stripBlock", "from": "TrailsEffects" }
+  ]
+}

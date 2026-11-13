@@ -1,0 +1,20 @@
+{
+  "id": "poe1.delirium-off",
+  "name": "Delirium off",
+  "description": "Removes delirium environment effects and affliction objects.",
+  "game": "poe1",
+  "targets": [
+    { "root": "metadata/effects/environment/league_affliction", "extensions": [".ao"] },
+    { "root": "metadata/miscellaneousobjects/affliction", "extensions": [".ao"] }
+  ],
+  "operations": [
+    { "type": "stripBlock", "from": "AttachedAnimatedObject" },
+    { "type": "stripBlock", "from": "EffectPack" },
+    { "type": "stripBlock", "from": "FixedMesh" },
+    { "type": "stripBlock", "from": "Lights" },
+    { "type": "stripBlock", "from": "ObjectHiding" },
+    { "type": "stripBlock", "from": "ParticleEffects" },
+    { "type": "stripBlock", "from": "SkinMesh" },
+    { "type": "stripBlock", "from": "TrailsEffects" }
+  ]
+}

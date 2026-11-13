@@ -1,0 +1,28 @@
+{
+  "id": "poe1.clean-terrain",
+  "name": "Clean terrain",
+  "description": "Strips doodad meshes, lights and effects from terrain, keeping chests, stash and crafting benches.",
+  "game": "poe1",
+  "targets": [
+    {
+      "root": "metadata/terrain/doodads",
+      "extensions": [".ao"],
+      "exclude": [
+        "encampment/chest_v01_01.ao",
+        "encampment/guildstash_v01_01.ao",
+        "general/craftingbenches/*",
+        "leagues/expedition/*"
+      ]
+    }
+  ],
+  "operations": [
+    { "type": "stripBlock", "from": "AttachedAnimatedObject" },
+    { "type": "stripBlock", "from": "EffectPack" },
+    { "type": "stripBlock", "from": "FixedMesh" },
+    { "type": "stripBlock", "from": "Lights" },
+    { "type": "stripBlock", "from": "ObjectHiding" },
+    { "type": "stripBlock", "from": "ParticleEffects" },
+    { "type": "stripBlock", "from": "SkinMesh" },
+    { "type": "stripBlock", "from": "TrailsEffects" }
+  ]
+}

@@ -92,6 +92,28 @@ public class PatchPlannerTests
     }
 
     [Fact]
+    public void Skips_excluded_globs()
+    {
+        using var archive = new MemoryArchive();
+        archive.AddText("metadata/environmentsettings/keep/a.env", "fog");
+        archive.AddText("metadata/environmentsettings/drop/b.env", "fog");
+
+        var patch = new PatchDefinition(
+            "fog-off",
+            "Fog off",
+            "test",
+            "poe1",
+            [new PatchTarget("metadata/environmentsettings", [".env"], ["drop/*"])],
+            [new PatchOperation("replace", "fog", "xog")]);
+
+        var plan = new PatchPlanner().Plan(archive, [patch]);
+
+        var file = Assert.Single(plan.Files);
+        Assert.EndsWith("a.env", file.Path);
+        Assert.Contains(plan.Skipped, skip => skip.Reason == "excluded");
+    }
+
+    [Fact]
     public void Empty_plan_when_nothing_matches()
     {
         using var archive = new MemoryArchive();
