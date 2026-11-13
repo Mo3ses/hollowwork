@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Hollowwork.Patches;
 
-public sealed record PatchTarget(string Root, IReadOnlyList<string> Extensions);
+public sealed record PatchTarget(string Root, IReadOnlyList<string> Extensions, IReadOnlyList<string>? Exclude = null);
 
 public sealed record PatchOperation(
     [property: JsonPropertyName("type")] string Type,

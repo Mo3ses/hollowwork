@@ -82,26 +82,24 @@
 
             <!-- Explorer -->
             <Border Grid.Column="1" Classes="panel">
-                <Grid RowDefinitions="Auto,Auto,Auto,180,Auto,Auto,*" Margin="14,14,14,10">
+                <Grid RowDefinitions="Auto,Auto,180,Auto,Auto,*" Margin="14,14,14,10">
                     <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
                         <TextBlock Grid.Column="0" Classes="eyebrow" Text="EXPLORER" />
                         <TextBlock Grid.Column="1" Classes="mono faint" Text="{Binding CountLabel}" />
                     </Grid>
 
-                    <TextBox Grid.Row="1" Classes="search" PlaceholderText="Filter paths…" Margin="0,12,0,10" />
+                    <TextBlock Grid.Row="1" Classes="eyebrow" Text="DIRECTORIES" Margin="0,12,0,6" />
 
-                    <TextBlock Grid.Row="2" Classes="eyebrow" Text="DIRECTORIES" Margin="0,0,0,6" />
-
-                    <ListBox Grid.Row="3" x:Name="DirectoryList"
+                    <ListBox Grid.Row="2" x:Name="DirectoryList"
                              ItemsSource="{Binding Directories}"
                              SelectionChanged="OnDirectorySelected"
                              Background="Transparent" BorderThickness="0" />
 
-                    <Border Grid.Row="4" Classes="rule" Margin="0,10" />
+                    <Border Grid.Row="3" Classes="rule" Margin="0,10" />
 
-                    <TextBlock Grid.Row="5" Classes="eyebrow" Text="FILES" Margin="0,0,0,6" />
+                    <TextBlock Grid.Row="4" Classes="eyebrow" Text="FILES" Margin="0,0,0,6" />
 
-                    <ListBox Grid.Row="6" x:Name="FileList"
+                    <ListBox Grid.Row="5" x:Name="FileList"
                              ItemsSource="{Binding Files}"
                              SelectionChanged="OnFileSelected"
                              Background="Transparent" BorderThickness="0">

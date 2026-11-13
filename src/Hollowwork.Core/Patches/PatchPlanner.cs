@@ -45,13 +45,23 @@ public sealed class PatchPlanner
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                foreach (var path in archive.ListFiles(target.Root, target.Extensions))
+                var root = target.Root.Replace('\\', '/').Trim('/');
+                foreach (var path in archive.ListFiles(root, target.Extensions))
                 {
                     cancellationToken.ThrowIfCancellationRequested();
 
                     if (PathProtection.IsProtected(path, roots))
                     {
                         skipped.Add(new SkippedFile(path, "protected"));
+                        continue;
+                    }
+
+                    var relative = root.Length == 0
+                        ? path
+                        : path[(root.Length + 1)..];
+                    if (GlobMatcher.IsMatch(relative, target.Exclude))
+                    {
+                        skipped.Add(new SkippedFile(path, "excluded"));
                         continue;
                     }
 
