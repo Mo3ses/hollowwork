@@ -46,12 +46,25 @@ dotnet run --project src/Hollowwork.App
 
 The app builds and runs on Linux (X11/Wayland) and Windows. macOS is untested.
 
+## Validate against a real archive
+
+The repository ships a smoke tool that only reads by default. With `--apply` it writes the same
+bytes back to one small file after a verified backup:
+
+```bash
+dotnet run --project src/Hollowwork.Smoke -- "/path/to/Content.ggpk"
+dotnet run --project src/Hollowwork.Smoke -- "/path/to/Content.ggpk" --apply --backup ~/hollowwork-backups
+```
+
+The backup is a full copy of the archive, so make sure there is disk space.
+
 ## Layout
 
 ```
 src/Hollowwork.App       Avalonia UI
 src/Hollowwork.Core      archive access, patch execution, backup
 src/Hollowwork.Patches   patch model, loader and validation
+src/Hollowwork.Smoke     read/write smoke check for real archives
 patches/poe1, patches/poe2
 tests/
 docs/
