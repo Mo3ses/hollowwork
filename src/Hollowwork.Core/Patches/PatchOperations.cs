@@ -15,6 +15,7 @@ public static class PatchOperations
         "setBool" => SetBool(text, operation.From, operation.To),
         "stripBlock" => StripBlock(text, operation.From),
         "removeLines" => RemoveLines(text, operation.From),
+        "setText" => SetText(text, operation.To),
         _ => throw new PatchValidationException($"Unknown operation '{operation.Type}'."),
     };
 
@@ -123,6 +124,12 @@ public static class PatchOperations
         return removed == 0
             ? new OperationResult(text, 0)
             : new OperationResult(string.Join('\n', kept), removed);
+    }
+
+    public static OperationResult SetText(string text, string? value)
+    {
+        value ??= string.Empty;
+        return new OperationResult(value, text == value ? 0 : 1);
     }
 
     private static int CountOccurrences(string text, string value)

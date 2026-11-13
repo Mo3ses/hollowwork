@@ -90,6 +90,15 @@ public class PatchOperationsTests
     }
 
     [Fact]
+    public void SetText_replaces_the_whole_content()
+    {
+        var result = PatchOperations.Apply("complex { effect }", new PatchOperation("setText", null, "0"));
+
+        Assert.Equal("0", result.Text);
+        Assert.Equal(1, result.Changes);
+    }
+
+    [Fact]
     public void Replace_requires_from()
     {
         Assert.Throws<PatchValidationException>(() =>

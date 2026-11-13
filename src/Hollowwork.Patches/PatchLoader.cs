@@ -23,7 +23,7 @@ public sealed class PatchValidationException(string message) : Exception(message
 public static class PatchLoader
 {
     private static readonly string[] Games = ["poe1", "poe2"];
-    private static readonly string[] OperationTypes = ["replace", "replaceExtension", "setBool", "stripBlock", "removeLines"];
+    private static readonly string[] OperationTypes = ["replace", "replaceExtension", "setBool", "stripBlock", "removeLines", "setText"];
 
     private static readonly JsonSerializerOptions Options = new()
     {
@@ -83,6 +83,11 @@ public static class PatchLoader
             if (operation.Type is "replace" or "replaceExtension" or "setBool" && string.IsNullOrEmpty(operation.From))
             {
                 throw new PatchValidationException($"Patch '{definition.Id}' operation '{operation.Type}' requires 'from'.");
+            }
+
+            if (operation.Type == "setText" && operation.To is null)
+            {
+                throw new PatchValidationException($"Patch '{definition.Id}' operation 'setText' requires 'to'.");
             }
         }
     }
