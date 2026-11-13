@@ -127,24 +127,34 @@
                     </StackPanel>
                 </Border>
 
-                <Border Grid.Row="1" Padding="18,10" Background="{DynamicResource DeepBrush}"
+                <Border Grid.Row="1" Padding="18,6" Background="{DynamicResource DeepBrush}"
                         BorderBrush="{DynamicResource LineSoftBrush}" BorderThickness="0,0,0,1">
-                    <TextBlock Classes="mono faint" Text="{Binding PreviewHeader}"
-                               TextTrimming="CharacterEllipsis" />
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Grid.Column="0" Classes="mono faint" Text="{Binding PreviewHeader}"
+                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                        <Button Grid.Column="1" Classes="ghost" Content="EXPORT"
+                                IsEnabled="{Binding CanExport}" Click="OnExportClicked" />
+                    </Grid>
                 </Border>
 
-                <TextBox Grid.Row="2"
-                         Text="{Binding PreviewText, Mode=OneWay}"
-                         IsReadOnly="True"
-                         AcceptsReturn="True"
-                         FontFamily="{DynamicResource MonoFont}"
-                         FontSize="12"
-                         Background="Transparent"
-                         BorderThickness="0"
-                         Padding="18,12"
-                         ScrollViewer.VerticalScrollBarVisibility="Auto"
-                         ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                         TextWrapping="NoWrap" />
+                <Grid Grid.Row="2">
+                    <TextBox Text="{Binding PreviewText, Mode=OneWay}"
+                             IsVisible="{Binding !HasImage}"
+                             IsReadOnly="True"
+                             AcceptsReturn="True"
+                             FontFamily="{DynamicResource MonoFont}"
+                             FontSize="12"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             Padding="18,12"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto"
+                             ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                             TextWrapping="NoWrap" />
+                    <Image Source="{Binding PreviewImage}"
+                           IsVisible="{Binding HasImage}"
+                           Stretch="Uniform"
+                           Margin="24" />
+                </Grid>
             </Grid>
 
             <!-- Patch drawer -->
