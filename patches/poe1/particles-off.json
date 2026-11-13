@@ -1,12 +1,13 @@
 {
   "id": "poe1.particles-off",
-  "name": "Particles off",
-  "description": "Replaces particle effect references with inert placeholders.",
+  "name": "Particles off (ambient)",
+  "description": "Replaces ambient particle effects with the archive's empty 4-byte stub.",
   "game": "poe1",
   "targets": [
-    { "root": "metadata/particles", "extensions": [".pet"] }
+    { "root": "metadata/particles/enviro_effects", "extensions": [".pet"] },
+    { "root": "metadata/effects/environment", "extensions": [".pet"] }
   ],
   "operations": [
-    { "type": "replaceExtension", "from": ".pet", "to": ".trl" }
+    { "type": "setText", "to": "0" }
   ]
 }
