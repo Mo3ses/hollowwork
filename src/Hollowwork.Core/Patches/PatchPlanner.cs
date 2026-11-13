@@ -30,17 +30,33 @@ public sealed class PatchPlanner
         IArchiveSession archive,
         IReadOnlyList<PatchDefinition> patches,
         IReadOnlyList<string>? protectedRoots = null,
+        CancellationToken cancellationToken = default) =>
+        Plan(
+            archive,
+            patches.Select(PatchSelection.WithoutValues).ToList(),
+            protectedRoots,
+            cancellationToken);
+
+    public PatchPlan Plan(
+        IArchiveSession archive,
+        IReadOnlyList<PatchSelection> selections,
+        IReadOnlyList<string>? protectedRoots = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(archive);
-        ArgumentNullException.ThrowIfNull(patches);
+        ArgumentNullException.ThrowIfNull(selections);
 
         var roots = protectedRoots ?? [];
         var working = new Dictionary<string, WorkingFile>(StringComparer.OrdinalIgnoreCase);
         var skipped = new List<SkippedFile>();
 
-        foreach (var patch in patches)
+        foreach (var selection in selections)
         {
+            var patch = selection.Definition;
+            var operations = patch.Operations
+                .Select(operation => Substitute(operation, selection.Values))
+                .ToList();
+
             foreach (var target in patch.Targets)
             {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -92,7 +108,7 @@ public sealed class PatchPlanner
                         working.Add(path, file);
                     }
 
-                    foreach (var operation in patch.Operations)
+                    foreach (var operation in operations)
                     {
                         if (!string.IsNullOrEmpty(operation.Unless)
                             && file.Current.Contains(operation.Unless, StringComparison.Ordinal))
@@ -116,6 +132,36 @@ public sealed class PatchPlanner
             .ToList();
 
         return new PatchPlan(planned, skipped);
+    }
+
+    private static PatchOperation Substitute(PatchOperation operation, IReadOnlyDictionary<string, string> values)
+    {
+        if (values.Count == 0)
+        {
+            return operation;
+        }
+
+        return operation with
+        {
+            From = ReplacePlaceholders(operation.From, values),
+            To = ReplacePlaceholders(operation.To, values),
+            Unless = ReplacePlaceholders(operation.Unless, values),
+        };
+    }
+
+    private static string? ReplacePlaceholders(string? text, IReadOnlyDictionary<string, string> values)
+    {
+        if (text is null)
+        {
+            return null;
+        }
+
+        foreach (var (key, value) in values)
+        {
+            text = text.Replace("{" + key + "}", value, StringComparison.Ordinal);
+        }
+
+        return text;
     }
 
     private sealed class WorkingFile(string path, string original, TextEncodingKind encoding)
