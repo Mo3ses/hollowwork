@@ -8,8 +8,9 @@ Hollowwork opens `Content.ggpk` and `_.index.bin`, lets you browse what is insid
 declarative patches with a mandatory dry run and a verified backup. It works offline and never
 touches the game process.
 
-> Status: **M0 — scaffold**. The shell, archive detection and patch loader build and test on Linux
-> and Windows. The patch engine and browser land in M1/M2 (see `docs/ROADMAP.md`).
+> Status: **M1 — patch engine**. The GGPK session, dry-run planner, applier, path protection and
+> hash-verified backup are implemented and tested. UI wiring and the file browser land next
+> (see `docs/ROADMAP.md`).
 
 ## Why
 
@@ -45,12 +46,25 @@ dotnet run --project src/Hollowwork.App
 
 The app builds and runs on Linux (X11/Wayland) and Windows. macOS is untested.
 
+## Validate against a real archive
+
+The repository ships a smoke tool that only reads by default. With `--apply` it writes the same
+bytes back to one small file after a verified backup:
+
+```bash
+dotnet run --project src/Hollowwork.Smoke -- "/path/to/Content.ggpk"
+dotnet run --project src/Hollowwork.Smoke -- "/path/to/Content.ggpk" --apply --backup ~/hollowwork-backups
+```
+
+The backup is a full copy of the archive, so make sure there is disk space.
+
 ## Layout
 
 ```
 src/Hollowwork.App       Avalonia UI
 src/Hollowwork.Core      archive access, patch execution, backup
 src/Hollowwork.Patches   patch model, loader and validation
+src/Hollowwork.Smoke     read/write smoke check for real archives
 patches/poe1, patches/poe2
 tests/
 docs/

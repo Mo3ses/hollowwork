@@ -9,14 +9,15 @@
 - [x] Unit tests and CI on Linux + Windows
 - [ ] Open archive read-only and populate the tree
 
-## M1 — patch engine
+## M1 — patch engine (engine complete)
 
-- [ ] `ArchiveSession` over LibGGPK3 (GGPK first)
-- [ ] Target resolution and dry-run plan
-- [ ] `replace`, `replaceExtension`, `setBool`
-- [ ] Backup with SHA-256 manifest and restore
-- [ ] Apply report and progress
-- [ ] Path protection
+- [x] `ArchiveSession` over LibGGPK3 (GGPK first)
+- [x] Target resolution and dry-run plan
+- [x] `replace`, `replaceExtension`, `setBool`
+- [x] Backup with SHA-256 manifest and restore
+- [x] Apply report (progress UI pending)
+- [x] Path protection
+- [ ] UI wiring (open archive, plan preview, apply button)
 
 ## M2 — browser
 

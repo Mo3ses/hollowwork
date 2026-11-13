@@ -11,3 +11,4 @@ backups/
 *.ggpk
 *.index.bin
 *.bundle.bin
+.worktrees/

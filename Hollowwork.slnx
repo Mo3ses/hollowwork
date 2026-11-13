@@ -3,6 +3,7 @@
     <Project Path="src/Hollowwork.App/Hollowwork.App.csproj" />
     <Project Path="src/Hollowwork.Core/Hollowwork.Core.csproj" />
     <Project Path="src/Hollowwork.Patches/Hollowwork.Patches.csproj" />
+    <Project Path="src/Hollowwork.Smoke/Hollowwork.Smoke.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Hollowwork.Core.Tests/Hollowwork.Core.Tests.csproj" />

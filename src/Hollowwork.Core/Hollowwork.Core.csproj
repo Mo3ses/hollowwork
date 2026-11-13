@@ -7,4 +7,8 @@
   <ItemGroup>
     <PackageReference Include="LibGGPK3.LibBundledGGPK3" Version="2.7.5" />
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Hollowwork.Patches\Hollowwork.Patches.csproj" />
+  </ItemGroup>
 </Project>
