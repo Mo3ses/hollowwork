@@ -55,35 +55,35 @@
             <Border Grid.Column="0" Background="{DynamicResource VoidBrush}"
                     BorderBrush="{DynamicResource LineSoftBrush}" BorderThickness="0,0,1,0">
                 <StackPanel Margin="0,10,0,0" Spacing="2">
-                    <Border Classes="railItem active">
+                    <Button Classes="rail" Classes.active="{Binding IsArchiveMode}" Click="OnArchiveModeClicked">
                         <StackPanel Spacing="4">
                             <TextBlock Classes="eyebrow" Text="01" />
-                            <TextBlock Classes="mono" Text="ARCHIVE" Foreground="{DynamicResource SoulBrush}" />
+                            <TextBlock Classes="mono" Text="ARCHIVE" />
                         </StackPanel>
-                    </Border>
-                    <Border Classes="railItem">
+                    </Button>
+                    <Button Classes="rail" Classes.active="{Binding IsPatchesMode}" Click="OnPatchesModeClicked">
                         <StackPanel Spacing="4">
                             <TextBlock Classes="eyebrow" Text="02" />
-                            <TextBlock Classes="mono dim" Text="PATCHES" />
+                            <TextBlock Classes="mono" Text="PATCHES" />
                         </StackPanel>
-                    </Border>
-                    <Border Classes="railItem">
+                    </Button>
+                    <Button Classes="rail" Click="OnBackupClicked">
                         <StackPanel Spacing="4">
                             <TextBlock Classes="eyebrow" Text="03" />
-                            <TextBlock Classes="mono dim" Text="BACKUP" />
+                            <TextBlock Classes="mono" Text="BACKUP" />
                         </StackPanel>
-                    </Border>
-                    <Border Classes="railItem">
+                    </Button>
+                    <Button Classes="rail" Classes.active="{Binding IsSettingsMode}" Click="OnSettingsModeClicked">
                         <StackPanel Spacing="4">
                             <TextBlock Classes="eyebrow" Text="04" />
-                            <TextBlock Classes="mono dim" Text="CONFIG" />
+                            <TextBlock Classes="mono" Text="SETTINGS" />
                         </StackPanel>
-                    </Border>
+                    </Button>
                 </StackPanel>
             </Border>
 
             <!-- Explorer -->
-            <Border Grid.Column="1" Classes="panel">
+            <Border Grid.Column="1" Classes="panel" IsVisible="{Binding ShowExplorer}">
                 <Grid RowDefinitions="Auto,Auto,180,Auto,Auto,*" Margin="14,14,14,10">
                     <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
                         <TextBlock Grid.Column="0" Classes="eyebrow" Text="EXPLORER" />
@@ -115,7 +115,7 @@
             </Border>
 
             <!-- Canvas / preview -->
-            <Grid Grid.Column="2" RowDefinitions="Auto,Auto,*">
+            <Grid Grid.Column="2" RowDefinitions="Auto,Auto,*" IsVisible="{Binding ShowPreview}">
                 <Border Grid.Row="0" Background="{DynamicResource DeepBrush}"
                         BorderBrush="{DynamicResource LineSoftBrush}" BorderThickness="0,0,0,1"
                         Height="34">
@@ -158,9 +158,10 @@
             </Grid>
 
             <!-- Patch drawer -->
-            <Border Grid.Column="3" Background="{DynamicResource DeepBrush}"
+            <Border Grid.Column="{Binding PatchColumn}" Grid.ColumnSpan="{Binding PatchColumnSpan}"
+                    IsVisible="{Binding ShowPatches}" Background="{DynamicResource DeepBrush}"
                     BorderBrush="{DynamicResource LineSoftBrush}" BorderThickness="1,0,0,0">
-                <Grid RowDefinitions="Auto,Auto,*,Auto">
+                <Grid RowDefinitions="Auto,Auto,*,Auto" MaxWidth="980" HorizontalAlignment="Center">
 
                     <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="16,16,16,0">
                         <TextBlock Grid.Column="0" Classes="eyebrow" Text="PATCHES" VerticalAlignment="Center" />
@@ -214,7 +215,7 @@
                                                                 </StackPanel>
                                                                 <Grid ColumnDefinitions="*,Auto"
                                                                       IsVisible="{Binding !IsColor}">
-                                                                    <Slider Minimum="{Binding Min}" Maximum="{Binding Max}"
+                                                                    <Slider MaxWidth="360" Minimum="{Binding Min}" Maximum="{Binding Max}"
                                                                             TickFrequency="{Binding Step}" IsSnapToTickEnabled="True"
                                                                             Value="{Binding Value, Mode=TwoWay}" />
                                                                     <TextBlock Grid.Column="1" Classes="mono faint"
@@ -227,7 +228,7 @@
                                                 </ItemsControl>
                                                 <Border IsVisible="{Binding IsMinimap}" Height="130" Margin="0,8,0,2"
                                                         BorderBrush="{DynamicResource LineBrush}" BorderThickness="1">
-                                                    <controls:MinimapPreview
+                                                    <controls:MinimapPreview MaxWidth="600" HorizontalAlignment="Left"
                                                         ExploredBrush="{Binding ExploredBrush}"
                                                         EdgeBrush="{Binding EdgeBrush}"
                                                         UnexploredBrush="{Binding UnexploredBrush}" />
@@ -260,6 +261,54 @@
                     </Border>
                 </Grid>
             </Border>
+            <!-- Settings -->
+            <Border Grid.Column="1" Grid.ColumnSpan="3" IsVisible="{Binding ShowSettings}"
+                    Background="{DynamicResource VoidGradient}">
+                <ScrollViewer>
+                    <StackPanel Margin="42,32" Spacing="22" MaxWidth="980" HorizontalAlignment="Left">
+                        <StackPanel Spacing="4">
+                            <TextBlock Classes="display" Text="Settings" />
+                            <TextBlock Classes="dim" Text="Local paths and defaults. Nothing leaves this machine." />
+                        </StackPanel>
+
+                        <Border Classes="rule" />
+
+                        <StackPanel Spacing="12">
+                            <TextBlock Classes="eyebrow" Text="PATHS" />
+                            <Grid ColumnDefinitions="150,*">
+                                <TextBlock Classes="mono faint" Text="ARCHIVE" />
+                                <TextBlock Grid.Column="1" Classes="mono" Text="{Binding ArchivePathText}" TextWrapping="Wrap" />
+                            </Grid>
+                            <Grid ColumnDefinitions="150,*">
+                                <TextBlock Classes="mono faint" Text="OODLE" />
+                                <TextBlock Grid.Column="1" Classes="mono" Text="{Binding OodlePathText}" TextWrapping="Wrap" />
+                            </Grid>
+                            <Grid ColumnDefinitions="150,*">
+                                <TextBlock Classes="mono faint" Text="BACKUPS" />
+                                <TextBlock Grid.Column="1" Classes="mono" Text="{Binding BackupRootText}" TextWrapping="Wrap" />
+                            </Grid>
+                            <Grid ColumnDefinitions="150,*">
+                                <TextBlock Classes="mono faint" Text="SETTINGS" />
+                                <TextBlock Grid.Column="1" Classes="mono" Text="{Binding SettingsPathText}" TextWrapping="Wrap" />
+                            </Grid>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <Button Content="OPEN DATA FOLDER" Click="OnOpenDataFolderClicked" />
+                            <Button Content="OPEN BACKUPS" Click="OnBackupClicked" />
+                        </StackPanel>
+
+                        <Border Classes="rule" />
+
+                        <StackPanel Spacing="6">
+                            <TextBlock Classes="eyebrow" Text="OODLE" />
+                            <TextBlock Classes="dim" TextWrapping="Wrap"
+                                       Text="Hollowwork does not ship Oodle. Place liboo2corelinux64.so.9 in ~/.local/share/Hollowwork/oo2core/ or set HOLLOWWORK_OODLE." />
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+
         </Grid>
 
         <!-- Status bar -->

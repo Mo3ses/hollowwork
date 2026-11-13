@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
@@ -97,6 +98,28 @@ public partial class MainWindow : Window
     }
 
     private async void OnBackupClicked(object? sender, RoutedEventArgs e) => await ShowBackupsAsync();
+
+    private void OnArchiveModeClicked(object? sender, RoutedEventArgs e) =>
+        _viewModel.SetMode(WorkspaceMode.Archive);
+
+    private void OnPatchesModeClicked(object? sender, RoutedEventArgs e) =>
+        _viewModel.SetMode(WorkspaceMode.Patches);
+
+    private void OnSettingsModeClicked(object? sender, RoutedEventArgs e) =>
+        _viewModel.SetMode(WorkspaceMode.Settings);
+
+    private void OnOpenDataFolderClicked(object? sender, RoutedEventArgs e) => OpenPath(AppPaths.DataRoot);
+
+    private static void OpenPath(string path)
+    {
+        Directory.CreateDirectory(path);
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = OperatingSystem.IsWindows() ? "explorer.exe" : "xdg-open",
+            Arguments = path,
+            UseShellExecute = true,
+        });
+    }
 
     private async Task ShowBackupsAsync()
     {
