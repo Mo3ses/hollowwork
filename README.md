@@ -2,6 +2,8 @@
 
 A cross-platform workbench for inspecting and modding Path of Exile client archives.
 
+![Hollowwork shell](docs/screenshot.png)
+
 Hollowwork opens `Content.ggpk` and `_.index.bin`, lets you browse what is inside, and applies
 declarative patches with a mandatory dry run and a verified backup. It works offline and never
 touches the game process.
