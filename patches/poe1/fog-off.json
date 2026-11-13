@@ -1,0 +1,12 @@
+{
+  "id": "poe1.fog-off",
+  "name": "Fog off",
+  "description": "Disables the fog block inside environment settings.",
+  "game": "poe1",
+  "targets": [
+    { "root": "metadata/environmentsettings", "extensions": [".env"] }
+  ],
+  "operations": [
+    { "type": "replace", "from": "fog", "to": "xog" }
+  ]
+}

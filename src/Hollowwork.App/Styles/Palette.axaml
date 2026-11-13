@@ -1,0 +1,59 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Hollowwork palette: bone on void, soul-cyan, moss, dream-violet, geo-gold. -->
+    <Color x:Key="VoidColor">#05080A</Color>
+    <Color x:Key="DeepColor">#080E12</Color>
+    <Color x:Key="SurfaceColor">#0D161B</Color>
+    <Color x:Key="SurfaceAltColor">#111D23</Color>
+    <Color x:Key="LineColor">#1D2E36</Color>
+    <Color x:Key="LineSoftColor">#152229</Color>
+    <Color x:Key="TextColor">#E8E6D9</Color>
+    <Color x:Key="TextDimColor">#8CA09A</Color>
+    <Color x:Key="TextFaintColor">#5E716C</Color>
+    <Color x:Key="SoulColor">#7FE0D0</Color>
+    <Color x:Key="SoulDimColor">#397A73</Color>
+    <Color x:Key="MossColor">#8FBF8F</Color>
+    <Color x:Key="DreamColor">#A78BFA</Color>
+    <Color x:Key="GeoColor">#D8B36A</Color>
+    <Color x:Key="DangerColor">#C96B6B</Color>
+
+    <!-- Fluent theme accent: soul-cyan -->
+    <Color x:Key="SystemAccentColor">#7FE0D0</Color>
+    <Color x:Key="SystemAccentColorDark1">#6BC9BB</Color>
+    <Color x:Key="SystemAccentColorDark2">#57B2A6</Color>
+    <Color x:Key="SystemAccentColorDark3">#439B91</Color>
+    <Color x:Key="SystemAccentColorLight1">#97E8DB</Color>
+    <Color x:Key="SystemAccentColorLight2">#AFF0E6</Color>
+    <Color x:Key="SystemAccentColorLight3">#C7F7F0</Color>
+
+    <SolidColorBrush x:Key="VoidBrush" Color="{StaticResource VoidColor}" />
+    <SolidColorBrush x:Key="DeepBrush" Color="{StaticResource DeepColor}" />
+    <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceColor}" />
+    <SolidColorBrush x:Key="SurfaceAltBrush" Color="{StaticResource SurfaceAltColor}" />
+    <SolidColorBrush x:Key="LineBrush" Color="{StaticResource LineColor}" />
+    <SolidColorBrush x:Key="LineSoftBrush" Color="{StaticResource LineSoftColor}" />
+    <SolidColorBrush x:Key="TextBrush" Color="{StaticResource TextColor}" />
+    <SolidColorBrush x:Key="TextDimBrush" Color="{StaticResource TextDimColor}" />
+    <SolidColorBrush x:Key="TextFaintBrush" Color="{StaticResource TextFaintColor}" />
+    <SolidColorBrush x:Key="SoulBrush" Color="{StaticResource SoulColor}" />
+    <SolidColorBrush x:Key="SoulDimBrush" Color="{StaticResource SoulDimColor}" />
+    <SolidColorBrush x:Key="MossBrush" Color="{StaticResource MossColor}" />
+    <SolidColorBrush x:Key="DreamBrush" Color="{StaticResource DreamColor}" />
+    <SolidColorBrush x:Key="GeoBrush" Color="{StaticResource GeoColor}" />
+    <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource DangerColor}" />
+
+    <LinearGradientBrush x:Key="VoidGradient" StartPoint="0%,0%" EndPoint="100%,100%">
+        <GradientStop Offset="0" Color="#04070A" />
+        <GradientStop Offset="0.55" Color="#071015" />
+        <GradientStop Offset="1" Color="#0A151A" />
+    </LinearGradientBrush>
+
+    <FontFamily x:Key="DisplayFont">avares://Hollowwork/Assets/Fonts#Cinzel</FontFamily>
+    <FontFamily x:Key="UiFont">avares://Avalonia.Fonts.Inter/Assets#Inter</FontFamily>
+    <FontFamily x:Key="MonoFont">monospace</FontFamily>
+
+    <x:Double x:Key="RailWidth">64</x:Double>
+    <x:Double x:Key="ExplorerWidth">292</x:Double>
+    <x:Double x:Key="DrawerWidth">348</x:Double>
+</ResourceDictionary>

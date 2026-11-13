@@ -1,0 +1,234 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Hollowwork.App.Views.MainWindow"
+        Title="Hollowwork"
+        Icon="/Assets/icon.png"
+        Width="1360" Height="820"
+        MinWidth="1120" MinHeight="680"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource VoidGradient}">
+
+    <Grid RowDefinitions="46,*,26">
+
+        <!-- Title bar -->
+        <Border Grid.Row="0" Background="{DynamicResource DeepBrush}"
+                BorderBrush="{DynamicResource LineSoftBrush}" BorderThickness="0,0,0,1">
+            <Grid ColumnDefinitions="Auto,Auto,*,Auto" Margin="18,0,10,0">
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Spacing="10">
+                    <Path Data="M0,4 L4,0 L8,4 L4,8 Z"
+                          Fill="{DynamicResource SoulBrush}" Width="9" Height="9" Stretch="Fill" />
+                    <TextBlock Classes="brand" Text="HOLLOWWORK" VerticalAlignment="Center" />
+                    <TextBlock Classes="eyebrow" Text="WORKBENCH" VerticalAlignment="Center" Margin="2,0,0,0" />
+                </StackPanel>
+
+                <Border Grid.Column="1" Width="1" Height="18" Margin="18,0"
+                        Background="{DynamicResource LineBrush}" VerticalAlignment="Center" />
+
+                <TextBlock Grid.Column="2" Classes="mono faint" VerticalAlignment="Center"
+                           Text="NO ARCHIVE OPEN — OPEN CONTENT.GGPK OR _.INDEX.BIN TO BEGIN" />
+
+                <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <Button Classes="ghost" Content="DOCS" />
+                    <Button Classes="ghost" Content="SETTINGS" />
+                    <Button Classes="primary" Content="OPEN ARCHIVE" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Main content -->
+        <Grid Grid.Row="1" ColumnDefinitions="64,292,*,348">
+
+            <!-- Mode rail -->
+            <Border Grid.Column="0" Background="{DynamicResource VoidBrush}"
+                    BorderBrush="{DynamicResource LineSoftBrush}" BorderThickness="0,0,1,0">
+                <StackPanel Margin="0,10,0,0" Spacing="2">
+                    <Border Classes="railItem active">
+                        <StackPanel Spacing="4">
+                            <TextBlock Classes="eyebrow" Text="01" />
+                            <TextBlock Classes="mono" Text="ARCHIVE" Foreground="{DynamicResource SoulBrush}" />
+                        </StackPanel>
+                    </Border>
+                    <Border Classes="railItem">
+                        <StackPanel Spacing="4">
+                            <TextBlock Classes="eyebrow" Text="02" />
+                            <TextBlock Classes="mono dim" Text="PATCHES" />
+                        </StackPanel>
+                    </Border>
+                    <Border Classes="railItem">
+                        <StackPanel Spacing="4">
+                            <TextBlock Classes="eyebrow" Text="03" />
+                            <TextBlock Classes="mono dim" Text="BACKUP" />
+                        </StackPanel>
+                    </Border>
+                    <Border Classes="railItem">
+                        <StackPanel Spacing="4">
+                            <TextBlock Classes="eyebrow" Text="04" />
+                            <TextBlock Classes="mono dim" Text="CONFIG" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Border>
+
+            <!-- Explorer -->
+            <Border Grid.Column="1" Classes="panel">
+                <Grid RowDefinitions="Auto,Auto,*,Auto" Margin="14,14,14,10">
+                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                        <TextBlock Grid.Column="0" Classes="eyebrow" Text="EXPLORER" />
+                        <TextBlock Grid.Column="1" Classes="mono faint" Text="0 PATHS" />
+                    </Grid>
+
+                    <TextBox Grid.Row="1" Classes="search" PlaceholderText="Filter paths…" Margin="0,12,0,10" />
+
+                    <TreeView Grid.Row="2">
+                        <TreeViewItem Header="metadata" IsExpanded="True">
+                            <TreeViewItem Header="characters" />
+                            <TreeViewItem Header="environmentsettings" />
+                            <TreeViewItem Header="monsters" />
+                            <TreeViewItem Header="particles" />
+                        </TreeViewItem>
+                        <TreeViewItem Header="art">
+                            <TreeViewItem Header="textures" />
+                            <TreeViewItem Header="models" />
+                        </TreeViewItem>
+                        <TreeViewItem Header="audio" />
+                        <TreeViewItem Header="data" />
+                    </TreeView>
+                </Grid>
+            </Border>
+
+            <!-- Canvas / inspector -->
+            <Grid Grid.Column="2" RowDefinitions="Auto,*">
+                <Border Grid.Row="0" Background="{DynamicResource DeepBrush}"
+                        BorderBrush="{DynamicResource LineSoftBrush}" BorderThickness="0,0,0,1">
+                    <TabControl>
+                        <TabItem Header="WELCOME">
+                            <Grid Background="{DynamicResource VoidGradient}">
+                                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="14">
+                                    <Border Width="88" Height="1" Background="{DynamicResource SoulDimBrush}" />
+                                    <TextBlock Classes="display" Text="Nothing open." HorizontalAlignment="Center" />
+                                    <TextBlock Classes="dim" Text="Pick an archive to inspect its contents."
+                                               HorizontalAlignment="Center" />
+                                    <TextBlock Classes="eyebrow" Text="GGPK · BUNDLE INDEX" HorizontalAlignment="Center" />
+                                    <Border Width="88" Height="1" Background="{DynamicResource LineBrush}" />
+                                </StackPanel>
+                            </Grid>
+                        </TabItem>
+                    </TabControl>
+                </Border>
+
+                <Grid Grid.Row="1" Background="{DynamicResource VoidGradient}">
+                    <Path Data="M 0,0 L 18,0 L 18,1 L 0,1 Z" Fill="{DynamicResource LineBrush}"
+                          HorizontalAlignment="Left" VerticalAlignment="Top" Margin="24" />
+                </Grid>
+            </Grid>
+
+            <!-- Patch drawer -->
+            <Border Grid.Column="3" Background="{DynamicResource DeepBrush}"
+                    BorderBrush="{DynamicResource LineSoftBrush}" BorderThickness="1,0,0,0">
+                <Grid RowDefinitions="Auto,Auto,*,Auto">
+
+                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="16,16,16,0">
+                        <TextBlock Grid.Column="0" Classes="eyebrow" Text="PATCHES" />
+                        <TextBlock Grid.Column="1" Classes="mono faint" Text="0 SELECTED" />
+                    </Grid>
+
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="6" Margin="16,12,16,10">
+                        <Button Classes="ghost" Content="ALL" FontSize="10" />
+                        <Button Classes="ghost" Content="VISUAL" FontSize="10" />
+                        <Button Classes="ghost" Content="PERF" FontSize="10" />
+                        <Button Classes="ghost" Content="UI" FontSize="10" />
+                    </StackPanel>
+
+                    <ScrollViewer Grid.Row="2">
+                        <StackPanel>
+                            <Border Classes="patchRow">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <CheckBox Grid.Column="0" Margin="0,0,10,0" />
+                                    <StackPanel Grid.Column="1" Spacing="3">
+                                        <TextBlock Text="Fog off" />
+                                        <TextBlock Classes="mono faint" Text="environment · .env" />
+                                    </StackPanel>
+                                    <Border Grid.Column="2" BorderBrush="{DynamicResource LineBrush}"
+                                            BorderThickness="1" CornerRadius="2" Padding="5,2">
+                                        <TextBlock Classes="eyebrow" Text="VISUAL" />
+                                    </Border>
+                                </Grid>
+                            </Border>
+
+                            <Border Classes="patchRow">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <CheckBox Grid.Column="0" Margin="0,0,10,0" />
+                                    <StackPanel Grid.Column="1" Spacing="3">
+                                        <TextBlock Text="Particles off" />
+                                        <TextBlock Classes="mono faint" Text="effects · .pet" />
+                                    </StackPanel>
+                                    <Border Grid.Column="2" BorderBrush="{DynamicResource LineBrush}"
+                                            BorderThickness="1" CornerRadius="2" Padding="5,2">
+                                        <TextBlock Classes="eyebrow" Text="PERF" />
+                                    </Border>
+                                </Grid>
+                            </Border>
+
+                            <Border Classes="patchRow">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <CheckBox Grid.Column="0" Margin="0,0,10,0" />
+                                    <StackPanel Grid.Column="1" Spacing="3">
+                                        <TextBlock Text="Shadows off" />
+                                        <TextBlock Classes="mono faint" Text="lighting · .env" />
+                                    </StackPanel>
+                                    <Border Grid.Column="2" BorderBrush="{DynamicResource LineBrush}"
+                                            BorderThickness="1" CornerRadius="2" Padding="5,2">
+                                        <TextBlock Classes="eyebrow" Text="PERF" />
+                                    </Border>
+                                </Grid>
+                            </Border>
+
+                            <Border Classes="patchRow">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <CheckBox Grid.Column="0" Margin="0,0,10,0" />
+                                    <StackPanel Grid.Column="1" Spacing="3">
+                                        <TextBlock Text="Loading screen off" />
+                                        <TextBlock Classes="mono faint" Text="ui · .env" />
+                                    </StackPanel>
+                                    <Border Grid.Column="2" BorderBrush="{DynamicResource LineBrush}"
+                                            BorderThickness="1" CornerRadius="2" Padding="5,2">
+                                        <TextBlock Classes="eyebrow" Text="UI" />
+                                    </Border>
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <Border Grid.Row="3" BorderBrush="{DynamicResource LineSoftBrush}" BorderThickness="0,1,0,0"
+                            Padding="16,12">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Grid.Column="0" Spacing="2">
+                                <TextBlock Classes="mono faint" Text="0 FILES · 0 LINES" />
+                                <TextBlock Classes="mono faint" Text="DRY RUN ONLY" />
+                            </StackPanel>
+                            <Button Grid.Column="1" Classes="primary" Content="APPLY" IsEnabled="False" />
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- Status bar -->
+        <Border Grid.Row="2" Background="{DynamicResource DeepBrush}"
+                BorderBrush="{DynamicResource LineSoftBrush}" BorderThickness="0,1,0,0">
+            <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto" Margin="16,0">
+                <TextBlock Grid.Column="0" Classes="mono" Foreground="{DynamicResource MossBrush}"
+                           VerticalAlignment="Center" Text="OFFLINE" />
+                <TextBlock Grid.Column="1" Classes="mono faint" Margin="18,0,0,0"
+                           VerticalAlignment="Center" Text="NO NETWORK ACCESS" />
+                <TextBlock Grid.Column="2" Classes="mono faint" Margin="18,0,0,0"
+                           VerticalAlignment="Center" Text="ARCHIVE —" />
+                <TextBlock Grid.Column="3" Classes="mono faint" Margin="0,0,18,0"
+                           VerticalAlignment="Center" Text="0 FILES" />
+                <TextBlock Grid.Column="4" Classes="mono faint"
+                           VerticalAlignment="Center" Text="v0.1.0-dev · LINUX" />
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

@@ -1,0 +1,12 @@
+{
+  "id": "poe1.shadows-off",
+  "name": "Shadows off",
+  "description": "Turns off dynamic shadow flags in environment settings.",
+  "game": "poe1",
+  "targets": [
+    { "root": "metadata/environmentsettings", "extensions": [".env"] }
+  ],
+  "operations": [
+    { "type": "setBool", "from": "shadows_enabled", "to": "false" }
+  ]
+}
