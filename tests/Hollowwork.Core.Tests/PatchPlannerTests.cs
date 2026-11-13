@@ -78,6 +78,20 @@ public class PatchPlannerTests
     }
 
     [Fact]
+    public void Skips_files_that_throw_on_read()
+    {
+        using var archive = new MemoryArchive();
+        const string path = "metadata/environmentsettings/bad.env";
+        archive.AddText(path, "fog");
+        archive.ThrowOnRead.Add(path);
+
+        var plan = new PatchPlanner().Plan(archive, [Patch("fog-off", "replace", "fog", "xog")]);
+
+        Assert.Empty(plan.Files);
+        Assert.Contains(plan.Skipped, skip => skip.Reason.Contains("read failed"));
+    }
+
+    [Fact]
     public void Empty_plan_when_nothing_matches()
     {
         using var archive = new MemoryArchive();

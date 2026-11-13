@@ -7,6 +7,8 @@ internal sealed class MemoryArchive : IArchiveSession
 {
     public Dictionary<string, byte[]> Files { get; } = new(StringComparer.OrdinalIgnoreCase);
 
+    public HashSet<string> ThrowOnRead { get; } = new(StringComparer.OrdinalIgnoreCase);
+
     public string FilePath { get; } = "memory.ggpk";
 
     public ArchiveKind Kind => ArchiveKind.Ggpk;
@@ -27,6 +29,11 @@ internal sealed class MemoryArchive : IArchiveSession
 
     public bool TryRead(string path, out byte[] content)
     {
+        if (ThrowOnRead.Contains(path))
+        {
+            throw new IOException("simulated bundle failure");
+        }
+
         if (Files.TryGetValue(path, out var bytes))
         {
             content = bytes;

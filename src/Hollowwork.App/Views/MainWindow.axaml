@@ -152,85 +152,50 @@
                 <Grid RowDefinitions="Auto,Auto,*,Auto">
 
                     <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="16,16,16,0">
-                        <TextBlock Grid.Column="0" Classes="eyebrow" Text="PATCHES" />
-                        <TextBlock Grid.Column="1" Classes="mono faint" Text="0 SELECTED" />
+                        <TextBlock Grid.Column="0" Classes="eyebrow" Text="PATCHES" VerticalAlignment="Center" />
+                        <ComboBox Grid.Column="1" Width="92" FontSize="11"
+                                  ItemsSource="{Binding Games}"
+                                  SelectedItem="{Binding SelectedGame}" />
                     </Grid>
 
-                    <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="6" Margin="16,12,16,10">
-                        <Button Classes="ghost" Content="ALL" FontSize="10" />
-                        <Button Classes="ghost" Content="VISUAL" FontSize="10" />
-                        <Button Classes="ghost" Content="PERF" FontSize="10" />
-                        <Button Classes="ghost" Content="UI" FontSize="10" />
-                    </StackPanel>
+                    <TextBlock Grid.Row="1" Classes="mono faint" Margin="16,8,16,8"
+                               Text="{Binding SelectionLabel}" />
 
                     <ScrollViewer Grid.Row="2">
-                        <StackPanel>
-                            <Border Classes="patchRow">
-                                <Grid ColumnDefinitions="Auto,*,Auto">
-                                    <CheckBox Grid.Column="0" Margin="0,0,10,0" />
-                                    <StackPanel Grid.Column="1" Spacing="3">
-                                        <TextBlock Text="Fog off" />
-                                        <TextBlock Classes="mono faint" Text="environment · .env" />
-                                    </StackPanel>
-                                    <Border Grid.Column="2" BorderBrush="{DynamicResource LineBrush}"
-                                            BorderThickness="1" CornerRadius="2" Padding="5,2">
-                                        <TextBlock Classes="eyebrow" Text="VISUAL" />
+                        <ListBox ItemsSource="{Binding Patches}" Background="Transparent" BorderThickness="0">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate x:DataType="vm:PatchItemViewModel">
+                                    <Border Classes="patchRow">
+                                        <Grid ColumnDefinitions="Auto,*,Auto">
+                                            <CheckBox Grid.Column="0" Margin="0,0,10,0"
+                                                      IsChecked="{Binding IsSelected, Mode=TwoWay}" />
+                                            <StackPanel Grid.Column="1" Spacing="3">
+                                                <TextBlock Text="{Binding Name}" />
+                                                <TextBlock Classes="mono faint" Text="{Binding Meta}" TextTrimming="CharacterEllipsis" />
+                                            </StackPanel>
+                                            <Border Grid.Column="2" BorderBrush="{DynamicResource LineBrush}"
+                                                    BorderThickness="1" CornerRadius="2" Padding="5,2">
+                                                <TextBlock Classes="eyebrow" Text="{Binding Tag}" />
+                                            </Border>
+                                        </Grid>
                                     </Border>
-                                </Grid>
-                            </Border>
-
-                            <Border Classes="patchRow">
-                                <Grid ColumnDefinitions="Auto,*,Auto">
-                                    <CheckBox Grid.Column="0" Margin="0,0,10,0" />
-                                    <StackPanel Grid.Column="1" Spacing="3">
-                                        <TextBlock Text="Particles off" />
-                                        <TextBlock Classes="mono faint" Text="effects · .pet" />
-                                    </StackPanel>
-                                    <Border Grid.Column="2" BorderBrush="{DynamicResource LineBrush}"
-                                            BorderThickness="1" CornerRadius="2" Padding="5,2">
-                                        <TextBlock Classes="eyebrow" Text="PERF" />
-                                    </Border>
-                                </Grid>
-                            </Border>
-
-                            <Border Classes="patchRow">
-                                <Grid ColumnDefinitions="Auto,*,Auto">
-                                    <CheckBox Grid.Column="0" Margin="0,0,10,0" />
-                                    <StackPanel Grid.Column="1" Spacing="3">
-                                        <TextBlock Text="Shadows off" />
-                                        <TextBlock Classes="mono faint" Text="lighting · .env" />
-                                    </StackPanel>
-                                    <Border Grid.Column="2" BorderBrush="{DynamicResource LineBrush}"
-                                            BorderThickness="1" CornerRadius="2" Padding="5,2">
-                                        <TextBlock Classes="eyebrow" Text="PERF" />
-                                    </Border>
-                                </Grid>
-                            </Border>
-
-                            <Border Classes="patchRow">
-                                <Grid ColumnDefinitions="Auto,*,Auto">
-                                    <CheckBox Grid.Column="0" Margin="0,0,10,0" />
-                                    <StackPanel Grid.Column="1" Spacing="3">
-                                        <TextBlock Text="Loading screen off" />
-                                        <TextBlock Classes="mono faint" Text="ui · .env" />
-                                    </StackPanel>
-                                    <Border Grid.Column="2" BorderBrush="{DynamicResource LineBrush}"
-                                            BorderThickness="1" CornerRadius="2" Padding="5,2">
-                                        <TextBlock Classes="eyebrow" Text="UI" />
-                                    </Border>
-                                </Grid>
-                            </Border>
-                        </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
                     </ScrollViewer>
 
                     <Border Grid.Row="3" BorderBrush="{DynamicResource LineSoftBrush}" BorderThickness="0,1,0,0"
                             Padding="16,12">
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel Grid.Column="0" Spacing="2">
-                                <TextBlock Classes="mono faint" Text="0 FILES · 0 LINES" />
-                                <TextBlock Classes="mono faint" Text="DRY RUN ONLY" />
+                                <TextBlock Classes="mono faint" Text="{Binding PlanSummary}" />
+                                <TextBlock Classes="mono faint" Text="{Binding BackupNotice}" />
                             </StackPanel>
-                            <Button Grid.Column="1" Classes="primary" Content="APPLY" IsEnabled="False" />
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                <Button Content="PLAN" Click="OnPlanClicked" />
+                                <Button Classes="primary" Content="{Binding ApplyLabel}"
+                                        IsEnabled="{Binding CanApply}" Click="OnApplyClicked" />
+                            </StackPanel>
                         </Grid>
                     </Border>
                 </Grid>
