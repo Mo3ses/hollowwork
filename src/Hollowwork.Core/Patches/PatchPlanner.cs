@@ -94,6 +94,13 @@ public sealed class PatchPlanner
 
                     foreach (var operation in patch.Operations)
                     {
+                        if (!string.IsNullOrEmpty(operation.Unless)
+                            && file.Current.Contains(operation.Unless, StringComparison.Ordinal))
+                        {
+                            file.Outcomes.Add(new OperationOutcome(operation.Type, 0));
+                            continue;
+                        }
+
                         var result = PatchOperations.Apply(file.Current, operation);
                         file.Current = result.Text;
                         file.Outcomes.Add(new OperationOutcome(operation.Type, result.Changes));
