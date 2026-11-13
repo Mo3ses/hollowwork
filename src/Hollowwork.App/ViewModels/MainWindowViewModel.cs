@@ -19,6 +19,13 @@ namespace Hollowwork.App.ViewModels;
 
 public sealed record ArchiveFileItem(string Path, string Name);
 
+public enum WorkspaceMode
+{
+    Archive,
+    Patches,
+    Settings,
+}
+
 public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 {
     private const int PreviewLimit = 200_000;
@@ -34,7 +41,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     private string _archiveLabel = "NO ARCHIVE OPEN · OPEN CONTENT.GGPK OR _.INDEX.BIN TO BEGIN";
     private string _kindLabel = "ARCHIVE —";
     private string _countLabel = "0 FILES";
-    private string _statusLabel = "OFFLINE · NO NETWORK ACCESS";
+    private string _statusLabel = "READY";
+    private WorkspaceMode _mode = WorkspaceMode.Archive;
     private string _previewHeader = "NO FILE SELECTED";
     private string _previewText = string.Empty;
     private string _planSummary = "0 FILES · 0 CHANGES";
@@ -170,6 +178,58 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 
     public string SelectionLabel => $"{Patches.Count(patch => patch.IsSelected)} SELECTED";
 
+    public WorkspaceMode Mode
+    {
+        get => _mode;
+        private set
+        {
+            if (_mode == value)
+            {
+                return;
+            }
+
+            _mode = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsArchiveMode));
+            OnPropertyChanged(nameof(IsPatchesMode));
+            OnPropertyChanged(nameof(IsSettingsMode));
+            OnPropertyChanged(nameof(ShowExplorer));
+            OnPropertyChanged(nameof(ShowPreview));
+            OnPropertyChanged(nameof(ShowPatches));
+            OnPropertyChanged(nameof(ShowSettings));
+            OnPropertyChanged(nameof(PatchColumn));
+            OnPropertyChanged(nameof(PatchColumnSpan));
+        }
+    }
+
+    public bool IsArchiveMode => _mode == WorkspaceMode.Archive;
+
+    public bool IsPatchesMode => _mode == WorkspaceMode.Patches;
+
+    public bool IsSettingsMode => _mode == WorkspaceMode.Settings;
+
+    public bool ShowExplorer => _mode == WorkspaceMode.Archive;
+
+    public bool ShowPreview => _mode == WorkspaceMode.Archive;
+
+    public bool ShowPatches => _mode != WorkspaceMode.Settings;
+
+    public bool ShowSettings => _mode == WorkspaceMode.Settings;
+
+    public int PatchColumn => _mode == WorkspaceMode.Patches ? 1 : 3;
+
+    public int PatchColumnSpan => _mode == WorkspaceMode.Patches ? 3 : 1;
+
+    public string OodlePathText => OodleLibrary.ResolvedPath ?? "not found — place liboo2corelinux64.so.9 in ~/.local/share/Hollowwork/oo2core";
+
+    public string BackupRootText => AppPaths.BackupRoot;
+
+    public string SettingsPathText => AppPaths.SettingsFile;
+
+    public string ArchivePathText => CurrentInputPath ?? "not open";
+
+    public void SetMode(WorkspaceMode mode) => Mode = mode;
+
     public string? CurrentInputPath { get; private set; }
 
     public ArchiveKind? TargetKind => _session?.Kind;
@@ -218,6 +278,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
             CurrentInputPath = path;
             _settings.LastArchive = path;
             SettingsStore.Save(_settings);
+            OnPropertyChanged(nameof(CurrentInputPath));
+            OnPropertyChanged(nameof(ArchivePathText));
+            OnPropertyChanged(nameof(OodlePathText));
 
             ArchiveLabel = path;
             KindLabel = _session.Kind == ArchiveKind.Ggpk ? "GGPK" : "BUNDLES2";
@@ -225,7 +288,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
             BackupNotice = _session.Kind == ArchiveKind.Ggpk
                 ? "BACKUP · FULL ARCHIVE"
                 : "BACKUP · INDEX + LIBGGPK3";
-            StatusLabel = "READY · OFFLINE";
+            StatusLabel = "READY";
 
             Directories.Clear();
             Files.Clear();
