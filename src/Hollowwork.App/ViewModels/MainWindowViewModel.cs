@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using Hollowwork.App;
 using Hollowwork.Core.Archives;
 using Hollowwork.Core.Backup;
 using Hollowwork.Core.Oodle;
@@ -132,6 +133,22 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 
     public string SelectionLabel => $"{Patches.Count(patch => patch.IsSelected)} SELECTED";
 
+    public string? CurrentInputPath { get; private set; }
+
+    public ArchiveKind? TargetKind => _session?.Kind;
+
+    public string? RestoreTarget => _session is null
+        ? null
+        : _session.Kind == ArchiveKind.Ggpk
+            ? _session.FilePath
+            : Path.GetDirectoryName(_session.FilePath);
+
+    public void CloseArchive()
+    {
+        _session?.Dispose();
+        _session = null;
+    }
+
     public async Task OpenAsync(string path)
     {
         if (IsBusy)
@@ -157,6 +174,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
             _session?.Dispose();
             _session = session;
             session = null;
+            CurrentInputPath = path;
 
             ArchiveLabel = path;
             KindLabel = _session.Kind == ArchiveKind.Ggpk ? "GGPK" : "BUNDLES2";
@@ -324,12 +342,17 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 
         try
         {
-            var backupRoot = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "Hollowwork",
-                "backups");
-
-            var manifest = await Task.Run(() => ArchiveBackup.Create(_session.FilePath, backupRoot));
+            string backupPath;
+            if (_session.Kind == ArchiveKind.Ggpk)
+            {
+                backupPath = await Task.Run(() => ArchiveBackup.Create(_session.FilePath, AppPaths.BackupRoot).BackupPath);
+            }
+            else
+            {
+                var bundlesDirectory = Path.GetDirectoryName(_session.FilePath)
+                    ?? throw new InvalidOperationException("Unable to resolve the Bundles2 directory.");
+                backupPath = await Task.Run(() => BundleArchiveBackup.Create(bundlesDirectory, AppPaths.BackupRoot));
+            }
 
             StatusLabel = "APPLYING…";
             var report = await Task.Run(() => new PatchApplier().Apply(_session, _plan));
@@ -337,7 +360,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
             StatusLabel = $"APPLIED · {report.FilesWritten:N0} FILES · {report.TotalChanges:N0} CHANGES";
             PlanSummary = $"APPLIED · {report.FilesWritten:N0} FILES";
             PreviewHeader = "APPLIED";
-            PreviewText = $"Backup: {manifest.BackupPath}\n\n" +
+            PreviewText = $"Backup: {backupPath}\n\n" +
                           string.Join('\n', report.Paths.Take(500));
 
             _plan = null;
