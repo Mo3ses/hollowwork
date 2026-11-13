@@ -16,7 +16,8 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            desktop.MainWindow = new MainWindow();
+            var initialPath = desktop.Args?.FirstOrDefault(argument => !argument.StartsWith('-'));
+            desktop.MainWindow = new MainWindow(initialPath);
         }
 
         base.OnFrameworkInitializationCompleted();

@@ -7,7 +7,7 @@
 - [x] Patch model, loader and validation
 - [x] Three sample patches
 - [x] Unit tests and CI on Linux + Windows
-- [ ] Open archive read-only and populate the tree
+- [x] Open archive read-only and populate the explorer
 
 ## M1 — patch engine (engine complete)
 
@@ -21,7 +21,9 @@
 
 ## M2 — browser
 
-- [ ] Text preview (AvalonEdit)
+- [x] Open GGPK/Bundles2 from the UI (background)
+- [x] Directory list and file list
+- [x] Text preview (read-only)
 - [ ] DDS preview (Pfim)
 - [ ] Export file / export directory
 - [ ] Replace file
