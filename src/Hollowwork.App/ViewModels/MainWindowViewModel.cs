@@ -516,7 +516,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
                     {
                         if (stored.TryGetValue(parameter.Key, out var value))
                         {
-                            parameter.Value = value;
+                            parameter.ApplyStored(value);
                         }
                     }
                 }
@@ -539,7 +539,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         foreach (var patch in Patches.Where(patch => patch.Parameters.Count > 0))
         {
             _settings.PatchParameters[patch.Definition.Id] =
-                patch.Parameters.ToDictionary(parameter => parameter.Key, parameter => parameter.Value);
+                patch.Parameters.ToDictionary(parameter => parameter.Key, parameter => parameter.Persisted);
         }
 
         SettingsStore.Save(_settings);

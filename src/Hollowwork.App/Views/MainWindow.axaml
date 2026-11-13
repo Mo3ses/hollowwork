@@ -184,14 +184,26 @@
                                                 <ItemsControl ItemsSource="{Binding Parameters}" Margin="0,4,0,0">
                                                     <ItemsControl.ItemTemplate>
                                                         <DataTemplate x:DataType="vm:PatchParameterViewModel">
-                                                            <Grid ColumnDefinitions="*,Auto" Margin="0,2,0,0">
-                                                                <Slider Minimum="{Binding Min}" Maximum="{Binding Max}"
-                                                                        TickFrequency="{Binding Step}" IsSnapToTickEnabled="True"
-                                                                        Value="{Binding Value, Mode=TwoWay}" />
-                                                                <TextBlock Grid.Column="1" Classes="mono faint"
-                                                                           Text="{Binding Display}" Margin="8,0,0,0"
-                                                                           VerticalAlignment="Center" />
-                                                            </Grid>
+                                                            <StackPanel Margin="0,2,0,0" Spacing="2">
+                                                                <StackPanel Orientation="Horizontal" Spacing="6"
+                                                                            IsVisible="{Binding IsColor}">
+                                                                    <TextBox Text="{Binding ColorText, Mode=TwoWay}"
+                                                                             Width="104" FontSize="11" />
+                                                                    <Border Width="18" Height="18"
+                                                                            Background="{Binding PreviewBrush}"
+                                                                            BorderBrush="{DynamicResource LineBrush}"
+                                                                            BorderThickness="1" />
+                                                                </StackPanel>
+                                                                <Grid ColumnDefinitions="*,Auto"
+                                                                      IsVisible="{Binding !IsColor}">
+                                                                    <Slider Minimum="{Binding Min}" Maximum="{Binding Max}"
+                                                                            TickFrequency="{Binding Step}" IsSnapToTickEnabled="True"
+                                                                            Value="{Binding Value, Mode=TwoWay}" />
+                                                                    <TextBlock Grid.Column="1" Classes="mono faint"
+                                                                               Text="{Binding Display}" Margin="8,0,0,0"
+                                                                               VerticalAlignment="Center" />
+                                                                </Grid>
+                                                            </StackPanel>
                                                         </DataTemplate>
                                                     </ItemsControl.ItemTemplate>
                                                 </ItemsControl>
