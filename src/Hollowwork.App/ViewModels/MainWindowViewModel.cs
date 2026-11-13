@@ -339,7 +339,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
             return;
         }
 
-        var selected = Patches.Where(patch => patch.IsSelected).Select(patch => patch.Definition).ToList();
+        var selected = Patches
+            .Where(patch => patch.IsSelected)
+            .Select(patch => new PatchSelection(patch.Definition, patch.Values()))
+            .ToList();
         if (selected.Count == 0)
         {
             StatusLabel = "SELECT AT LEAST ONE PATCH";

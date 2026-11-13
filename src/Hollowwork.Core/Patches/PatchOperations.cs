@@ -16,6 +16,7 @@ public static class PatchOperations
         "stripBlock" => StripBlock(text, operation.From),
         "removeLines" => RemoveLines(text, operation.From),
         "setText" => SetText(text, operation.To),
+        "replaceRegex" => ReplaceRegex(text, operation.From, operation.To),
         _ => throw new PatchValidationException($"Unknown operation '{operation.Type}'."),
     };
 
@@ -124,6 +125,19 @@ public static class PatchOperations
         return removed == 0
             ? new OperationResult(text, 0)
             : new OperationResult(string.Join('\n', kept), removed);
+    }
+
+    public static OperationResult ReplaceRegex(string text, string? pattern, string? replacement)
+    {
+        if (string.IsNullOrEmpty(pattern))
+        {
+            throw new PatchValidationException("replaceRegex requires 'from' as a regex.");
+        }
+
+        var count = Regex.Matches(text, pattern).Count;
+        return count == 0
+            ? new OperationResult(text, 0)
+            : new OperationResult(Regex.Replace(text, pattern, replacement ?? string.Empty), count);
     }
 
     public static OperationResult SetText(string text, string? value)

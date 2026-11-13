@@ -1,0 +1,29 @@
+{
+  "id": "poe1.camera-zoom",
+  "name": "Camera zoom",
+  "description": "Adds a configurable camera zoom node to the player object.",
+  "game": "poe1",
+  "parameters": [
+    { "key": "zoom", "label": "Zoom", "min": 1.0, "max": 8.0, "step": 0.1, "default": 1.7 }
+  ],
+  "targets": [
+    {
+      "root": "metadata/characters",
+      "extensions": [".ot"],
+      "files": ["metadata/characters/character.ot"]
+    }
+  ],
+  "operations": [
+    {
+      "type": "replaceRegex",
+      "from": "CreateCameraZoomNode\\(5000\\.0, 5000\\.0, [0-9.]+\\)",
+      "to": "CreateCameraZoomNode(5000.0, 5000.0, {zoom})"
+    },
+    {
+      "type": "replace",
+      "from": "team = 1",
+      "to": "team = 1\r\n\ton_initial_position_set = {CreateCameraZoomNode(5000.0, 5000.0, {zoom});} ",
+      "unless": "CreateCameraZoomNode"
+    }
+  ]
+}

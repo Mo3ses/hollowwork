@@ -11,20 +11,35 @@ public sealed record PatchOperation(
     [property: JsonPropertyName("to")] string? To = null,
     [property: JsonPropertyName("unless")] string? Unless = null);
 
+public sealed record PatchParameter(
+    [property: JsonPropertyName("key")] string Key,
+    [property: JsonPropertyName("label")] string Label,
+    [property: JsonPropertyName("min")] double Min,
+    [property: JsonPropertyName("max")] double Max,
+    [property: JsonPropertyName("step")] double Step,
+    [property: JsonPropertyName("default")] double Default);
+
 public sealed record PatchDefinition(
     [property: JsonPropertyName("id")] string Id,
     [property: JsonPropertyName("name")] string Name,
     [property: JsonPropertyName("description")] string Description,
     [property: JsonPropertyName("game")] string Game,
     [property: JsonPropertyName("targets")] IReadOnlyList<PatchTarget> Targets,
-    [property: JsonPropertyName("operations")] IReadOnlyList<PatchOperation> Operations);
+    [property: JsonPropertyName("operations")] IReadOnlyList<PatchOperation> Operations,
+    [property: JsonPropertyName("parameters")] IReadOnlyList<PatchParameter>? Parameters = null);
+
+public sealed record PatchSelection(PatchDefinition Definition, IReadOnlyDictionary<string, string> Values)
+{
+    public static PatchSelection WithoutValues(PatchDefinition definition) =>
+        new(definition, new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase));
+}
 
 public sealed class PatchValidationException(string message) : Exception(message);
 
 public static class PatchLoader
 {
     private static readonly string[] Games = ["poe1", "poe2"];
-    private static readonly string[] OperationTypes = ["replace", "replaceExtension", "setBool", "stripBlock", "removeLines", "setText"];
+    private static readonly string[] OperationTypes = ["replace", "replaceExtension", "setBool", "stripBlock", "removeLines", "setText", "replaceRegex"];
 
     private static readonly JsonSerializerOptions Options = new()
     {
@@ -81,7 +96,7 @@ public static class PatchLoader
                 throw new PatchValidationException($"Patch '{definition.Id}' uses unknown operation '{operation.Type}'.");
             }
 
-            if (operation.Type is "replace" or "replaceExtension" or "setBool" && string.IsNullOrEmpty(operation.From))
+            if (operation.Type is "replace" or "replaceExtension" or "setBool" or "replaceRegex" && string.IsNullOrEmpty(operation.From))
             {
                 throw new PatchValidationException($"Patch '{definition.Id}' operation '{operation.Type}' requires 'from'.");
             }

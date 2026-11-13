@@ -181,6 +181,20 @@
                                             <StackPanel Grid.Column="1" Spacing="3">
                                                 <TextBlock Text="{Binding Name}" />
                                                 <TextBlock Classes="mono faint" Text="{Binding Meta}" TextTrimming="CharacterEllipsis" />
+                                                <ItemsControl ItemsSource="{Binding Parameters}" Margin="0,4,0,0">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate x:DataType="vm:PatchParameterViewModel">
+                                                            <Grid ColumnDefinitions="*,Auto" Margin="0,2,0,0">
+                                                                <Slider Minimum="{Binding Min}" Maximum="{Binding Max}"
+                                                                        TickFrequency="{Binding Step}" IsSnapToTickEnabled="True"
+                                                                        Value="{Binding Value, Mode=TwoWay}" />
+                                                                <TextBlock Grid.Column="1" Classes="mono faint"
+                                                                           Text="{Binding Display}" Margin="8,0,0,0"
+                                                                           VerticalAlignment="Center" />
+                                                            </Grid>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
                                             </StackPanel>
                                             <Border Grid.Column="2" BorderBrush="{DynamicResource LineBrush}"
                                                     BorderThickness="1" CornerRadius="2" Padding="5,2">

@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Hollowwork.Patches;
@@ -13,6 +14,10 @@ public sealed class PatchItemViewModel : INotifyPropertyChanged
         Definition = definition;
         var target = definition.Targets[0];
         Meta = $"{target.Root} · {string.Join(", ", target.Extensions)}";
+        foreach (var parameter in definition.Parameters ?? [])
+        {
+            Parameters.Add(new PatchParameterViewModel(parameter));
+        }
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -24,6 +29,8 @@ public sealed class PatchItemViewModel : INotifyPropertyChanged
     public string Description => Definition.Description;
 
     public string Meta { get; }
+
+    public ObservableCollection<PatchParameterViewModel> Parameters { get; } = [];
 
     public string Tag => Definition.Game.ToUpperInvariant();
 
@@ -41,4 +48,7 @@ public sealed class PatchItemViewModel : INotifyPropertyChanged
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsSelected)));
         }
     }
+
+    public IReadOnlyDictionary<string, string> Values() =>
+        Parameters.ToDictionary(parameter => parameter.Key, parameter => parameter.Formatted);
 }

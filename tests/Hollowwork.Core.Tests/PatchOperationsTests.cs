@@ -90,6 +90,18 @@ public class PatchOperationsTests
     }
 
     [Fact]
+    public void ReplaceRegex_updates_a_value()
+    {
+        var result = PatchOperations.Apply(
+            "CreateCameraZoomNode(5000.0, 5000.0, 1.7);",
+            new PatchOperation("replaceRegex", @"CreateCameraZoomNode\(5000\.0, 5000\.0, [0-9.]+\)",
+                "CreateCameraZoomNode(5000.0, 5000.0, 2.5)"));
+
+        Assert.Equal("CreateCameraZoomNode(5000.0, 5000.0, 2.5);", result.Text);
+        Assert.Equal(1, result.Changes);
+    }
+
+    [Fact]
     public void SetText_replaces_the_whole_content()
     {
         var result = PatchOperations.Apply("complex { effect }", new PatchOperation("setText", null, "0"));
