@@ -1,0 +1,16 @@
+{
+  "id": "poe1.map-reveal",
+  "name": "Map revealed",
+  "description": "Forces minimap visibility to fully revealed.",
+  "game": "poe1",
+  "targets": [
+    { "root": "shaders", "extensions": [".hlsl"] }
+  ],
+  "operations": [
+    {
+      "type": "replace",
+      "from": "res_color = float4(1.0f, 0.0f, 0.0f, 1.0f);",
+      "to": "res_color = float4(1.0f, 0.0f, 0.0f, 1.0f);\r\n\tres_color = max(res_color, 1.0f);"
+    }
+  ]
+}
