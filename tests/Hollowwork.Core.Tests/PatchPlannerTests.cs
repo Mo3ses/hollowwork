@@ -52,7 +52,7 @@ public class PatchPlannerTests
     public void Skips_non_utf8_files()
     {
         using var archive = new MemoryArchive();
-        archive.Files["metadata/environmentsettings/bin.env"] = [0xFF, 0xFE, 0x00, 0x01];
+        archive.Files["metadata/environmentsettings/bin.env"] = [0x80, 0x81, 0x82];
 
         var plan = new PatchPlanner().Plan(archive, [Patch("fog-off", "replace", "fog", "xog")]);
 

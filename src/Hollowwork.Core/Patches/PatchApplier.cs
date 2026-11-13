@@ -17,7 +17,7 @@ public sealed class PatchApplier
 
         foreach (var file in plan.Files)
         {
-            archive.Write(file.Path, TextContent.Encode(file.UpdatedText, file.HasBom));
+            archive.Write(file.Path, TextContent.Encode(file.UpdatedText, file.Encoding));
             written.Add(file.Path);
         }
 
