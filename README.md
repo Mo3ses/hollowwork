@@ -8,8 +8,9 @@ Hollowwork opens `Content.ggpk` and `_.index.bin`, lets you browse what is insid
 declarative patches with a mandatory dry run and a verified backup. It works offline and never
 touches the game process.
 
-> Status: **M0 — scaffold**. The shell, archive detection and patch loader build and test on Linux
-> and Windows. The patch engine and browser land in M1/M2 (see `docs/ROADMAP.md`).
+> Status: **M1 — patch engine**. The GGPK session, dry-run planner, applier, path protection and
+> hash-verified backup are implemented and tested. UI wiring and the file browser land next
+> (see `docs/ROADMAP.md`).
 
 ## Why
 
