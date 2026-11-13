@@ -1,10 +1,10 @@
 {
   "id": "poe1.particles-off",
-  "name": "Particles off",
-  "description": "Replaces particle effect references with inert placeholders.",
+  "name": "Particles off (ambient)",
+  "description": "Disables ambient environment particle effects by invalidating .pet references.",
   "game": "poe1",
   "targets": [
-    { "root": "metadata/particles", "extensions": [".pet"] }
+    { "root": "metadata/effects/environment", "extensions": [".ao"] }
   ],
   "operations": [
     { "type": "replaceExtension", "from": ".pet", "to": ".trl" }
