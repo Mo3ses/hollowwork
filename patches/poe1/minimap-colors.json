@@ -1,0 +1,54 @@
+{
+  "id": "poe1.minimap-colors",
+  "name": "Minimap colors",
+  "description": "Recolors explored, edge and unexplored minimap areas.",
+  "game": "poe1",
+  "parameters": [
+    {
+      "key": "explored",
+      "label": "Explored",
+      "type": "color",
+      "defaultText": "#FFFFFF03"
+    },
+    {
+      "key": "edge",
+      "label": "Edge",
+      "type": "color",
+      "defaultText": "#8080FF80"
+    },
+    {
+      "key": "unexplored",
+      "label": "Unexplored",
+      "type": "color",
+      "defaultText": "#0080FF80"
+    }
+  ],
+  "targets": [
+    {
+      "root": "shaders",
+      "extensions": [
+        ".hlsl"
+      ],
+      "files": [
+        "shaders/minimap_blending_pixel.hlsl"
+      ]
+    }
+  ],
+  "operations": [
+    {
+      "type": "replaceRegex",
+      "from": "float4 walkable_color = float4\\([^)]*\\);",
+      "to": "float4 walkable_color = float4({explored});"
+    },
+    {
+      "type": "replaceRegex",
+      "from": "(float4 walkability_map_color = lerp\\(walkable_color, )float4\\([^)]*\\)(, walkable_to_edge_ratio\\);)",
+      "to": "$1float4({edge})$2"
+    },
+    {
+      "type": "replaceRegex",
+      "from": "walkability_map_color = lerp\\(walkability_map_color \\* float4\\([^)]*\\), float4\\([^)]*\\), pow\\(saturate\\(unexplored_edge\\), 25\\.0f\\)",
+      "to": "walkability_map_color = lerp(walkability_map_color * float4(1.0f, 1.0f, 1.0f, visibility), float4({unexplored}), pow(saturate(unexplored_edge), 25.0f)"
+    }
+  ]
+}

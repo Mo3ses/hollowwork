@@ -17,7 +17,9 @@ public sealed record PatchParameter(
     [property: JsonPropertyName("min")] double Min,
     [property: JsonPropertyName("max")] double Max,
     [property: JsonPropertyName("step")] double Step,
-    [property: JsonPropertyName("default")] double Default);
+    [property: JsonPropertyName("default")] double Default,
+    [property: JsonPropertyName("type")] string? Type = null,
+    [property: JsonPropertyName("defaultText")] string? DefaultText = null);
 
 public sealed record PatchDefinition(
     [property: JsonPropertyName("id")] string Id,
