@@ -6,6 +6,7 @@ using Avalonia;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Hollowwork.App;
+using Hollowwork.App.Settings;
 using Hollowwork.Core.Archives;
 using Hollowwork.Core.Backup;
 using Hollowwork.Core.Oodle;
@@ -22,6 +23,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 {
     private const int PreviewLimit = 200_000;
 
+    private readonly AppSettings _settings;
     private IArchiveSession? _session;
     private WriteableBitmap? _previewImage;
     private byte[]? _selectedBytes;
@@ -46,6 +48,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 
     public MainWindowViewModel()
     {
+        _settings = SettingsStore.Load();
+        _selectedGame = _settings.Game is "poe2" ? "poe2" : "poe1";
         LoadPatches();
     }
 
@@ -68,6 +72,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
             }
 
             _selectedGame = value;
+            _settings.Game = value;
+            SettingsStore.Save(_settings);
             OnPropertyChanged();
             LoadPatches();
         }
@@ -210,6 +216,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
             _session = session;
             session = null;
             CurrentInputPath = path;
+            _settings.LastArchive = path;
+            SettingsStore.Save(_settings);
 
             ArchiveLabel = path;
             KindLabel = _session.Kind == ArchiveKind.Ggpk ? "GGPK" : "BUNDLES2";
@@ -451,6 +459,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 
     public void Dispose()
     {
+        PersistParameters();
         _session?.Dispose();
         _session = null;
     }
@@ -501,6 +510,18 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
                     }
                 };
 
+                if (_settings.PatchParameters.TryGetValue(definition.Id, out var stored))
+                {
+                    foreach (var parameter in item.Parameters)
+                    {
+                        if (stored.TryGetValue(parameter.Key, out var value))
+                        {
+                            parameter.Value = value;
+                        }
+                    }
+                }
+
+                item.ParameterChanged += PersistParameters;
                 Patches.Add(item);
             }
 
@@ -510,6 +531,18 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         {
             StatusLabel = $"PATCH LOAD FAILED · {exception.Message}";
         }
+    }
+
+    private void PersistParameters()
+    {
+        _settings.PatchParameters.Clear();
+        foreach (var patch in Patches.Where(patch => patch.Parameters.Count > 0))
+        {
+            _settings.PatchParameters[patch.Definition.Id] =
+                patch.Parameters.ToDictionary(parameter => parameter.Key, parameter => parameter.Value);
+        }
+
+        SettingsStore.Save(_settings);
     }
 
     private void ResetPlan()

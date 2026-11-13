@@ -9,6 +9,8 @@ public sealed class PatchItemViewModel : INotifyPropertyChanged
 {
     private bool _isSelected;
 
+    public event Action? ParameterChanged;
+
     public PatchItemViewModel(PatchDefinition definition)
     {
         Definition = definition;
@@ -16,7 +18,15 @@ public sealed class PatchItemViewModel : INotifyPropertyChanged
         Meta = $"{target.Root} · {string.Join(", ", target.Extensions)}";
         foreach (var parameter in definition.Parameters ?? [])
         {
-            Parameters.Add(new PatchParameterViewModel(parameter));
+            var viewModel = new PatchParameterViewModel(parameter);
+            viewModel.PropertyChanged += (_, args) =>
+            {
+                if (args.PropertyName == nameof(PatchParameterViewModel.Value))
+                {
+                    ParameterChanged?.Invoke();
+                }
+            };
+            Parameters.Add(viewModel);
         }
     }
 
