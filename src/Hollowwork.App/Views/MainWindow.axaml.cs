@@ -82,4 +82,8 @@ public partial class MainWindow : Window
             await _viewModel.SelectFileAsync(item.Path);
         }
     }
+
+    private async void OnPlanClicked(object? sender, RoutedEventArgs e) => await _viewModel.PlanAsync();
+
+    private async void OnApplyClicked(object? sender, RoutedEventArgs e) => await _viewModel.ApplyAsync();
 }

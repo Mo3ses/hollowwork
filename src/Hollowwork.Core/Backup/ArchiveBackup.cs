@@ -27,7 +27,7 @@ public static class ArchiveBackup
         }
 
         var createdAt = now ?? DateTimeOffset.UtcNow;
-        var folder = Path.Combine(backupRoot, createdAt.ToString("yyyyMMdd-HHmmss"));
+        var folder = Path.Combine(backupRoot, createdAt.ToString("yyyyMMdd-HHmmss-fff"));
         Directory.CreateDirectory(folder);
 
         var destination = Path.Combine(folder, Path.GetFileName(source));

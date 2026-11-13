@@ -9,8 +9,9 @@ declarative patches with a mandatory dry run and a verified backup. It works off
 touches the game process.
 
 > Status: **M2 — browser**. GGPK and Bundles2 sessions, dry-run planner, applier, path protection
-> and hash-verified backup are implemented. The UI opens archives, lists paths and previews text;
-> DDS preview, export/replace and applying patches from the UI come next (`docs/ROADMAP.md`).
+> and hash-verified backup are implemented. The UI opens archives, lists paths, previews text and
+> applies patches with dry run and backup; DDS preview and export/replace come next
+> (`docs/ROADMAP.md`).
 
 ## Why
 

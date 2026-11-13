@@ -57,9 +57,18 @@ public sealed class PatchPlanner
 
                     if (!working.TryGetValue(path, out var file))
                     {
-                        if (!archive.TryRead(path, out var bytes))
+                        byte[] bytes;
+                        try
                         {
-                            skipped.Add(new SkippedFile(path, "not found"));
+                            if (!archive.TryRead(path, out bytes))
+                            {
+                                skipped.Add(new SkippedFile(path, "not found"));
+                                continue;
+                            }
+                        }
+                        catch (Exception exception)
+                        {
+                            skipped.Add(new SkippedFile(path, $"read failed: {exception.GetType().Name}"));
                             continue;
                         }
 

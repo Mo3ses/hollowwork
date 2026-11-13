@@ -28,6 +28,8 @@
 - [ ] Export file / export directory
 - [ ] Replace file
 - [ ] Profiles per game
+- [x] Dry run, backup and apply from the UI
+- [x] Patch list loaded from `patches/poe1` and `patches/poe2`
 
 ## M3 — bundles and polish
 
