@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:Hollowwork.App.ViewModels"
+        xmlns:cp="using:Avalonia.Controls"
         x:Class="Hollowwork.App.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Title="Hollowwork"
@@ -187,12 +188,22 @@
                                                             <StackPanel Margin="0,2,0,0" Spacing="2">
                                                                 <StackPanel Orientation="Horizontal" Spacing="6"
                                                                             IsVisible="{Binding IsColor}">
-                                                                    <TextBox Text="{Binding ColorText, Mode=TwoWay}"
-                                                                             Width="104" FontSize="11" />
-                                                                    <Border Width="18" Height="18"
+                                                                    <Button Width="44" Height="26" Padding="0"
                                                                             Background="{Binding PreviewBrush}"
                                                                             BorderBrush="{DynamicResource LineBrush}"
-                                                                            BorderThickness="1" />
+                                                                            BorderThickness="1"
+                                                                            ToolTip.Tip="Pick color">
+                                                                        <Button.Flyout>
+                                                                            <Flyout Placement="BottomEdgeAlignedLeft">
+                                                                                <cp:ColorView Color="{Binding Color, Mode=TwoWay}"
+                                                                                              Width="320" Height="380"
+                                                                                              IsAlphaEnabled="True"
+                                                                                              IsAlphaVisible="True" />
+                                                                            </Flyout>
+                                                                        </Button.Flyout>
+                                                                    </Button>
+                                                                    <TextBox Text="{Binding ColorText, Mode=TwoWay}"
+                                                                             Width="96" FontSize="11" />
                                                                 </StackPanel>
                                                                 <Grid ColumnDefinitions="*,Auto"
                                                                       IsVisible="{Binding !IsColor}">

@@ -70,7 +70,16 @@ public sealed class PatchParameterViewModel : INotifyPropertyChanged
             OnPropertyChanged();
             OnPropertyChanged(nameof(Display));
             OnPropertyChanged(nameof(IsValidColor));
+            OnPropertyChanged(nameof(Color));
         }
+    }
+
+    public Color Color
+    {
+        get => ShaderColor.TryParse(ColorText, out var r, out var g, out var b, out var a)
+            ? Color.FromArgb(a, r, g, b)
+            : Colors.Transparent;
+        set => ColorText = $"#{value.R:X2}{value.G:X2}{value.B:X2}{value.A:X2}";
     }
 
     public IBrush? PreviewBrush
