@@ -1,0 +1,124 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Hollowwork.App.ViewModels"
+        xmlns:cp="using:Avalonia.Controls"
+        x:Class="Hollowwork.App.Views.CompactWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="Hollowwork"
+        Icon="/Assets/icon.png"
+        Width="440" Height="780"
+        MinWidth="400" MinHeight="600"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource VoidGradient}">
+
+    <Window.Resources>
+        <DataTemplate x:Key="CompactParameterTemplate" x:DataType="vm:PatchParameterViewModel">
+            <Grid ColumnDefinitions="88,*,Auto" Margin="0,3,0,0">
+                <TextBlock Classes="mono faint" Text="{Binding Label}" VerticalAlignment="Center" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6"
+                            IsVisible="{Binding IsColor}">
+                    <Button Width="36" Height="24" Padding="0" Background="Transparent"
+                            HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"
+                            BorderBrush="{DynamicResource LineBrush}" BorderThickness="1"
+                            ToolTip.Tip="Pick color">
+                        <Grid>
+                            <Border Background="#2A2A2A" />
+                            <Border Background="{Binding PreviewBrush}" />
+                        </Grid>
+                        <Button.Flyout>
+                            <Flyout Placement="Right">
+                                <cp:ColorView Color="{Binding Color, Mode=TwoWay}"
+                                              Width="300" Height="360"
+                                              IsAlphaEnabled="True" IsAlphaVisible="True" />
+                            </Flyout>
+                        </Button.Flyout>
+                    </Button>
+                    <TextBox Text="{Binding ColorText, Mode=TwoWay}" Width="88" FontSize="11" />
+                </StackPanel>
+                <Grid Grid.Column="1" ColumnDefinitions="*,Auto" IsVisible="{Binding !IsColor}">
+                    <Slider MaxWidth="220" Minimum="{Binding Min}" Maximum="{Binding Max}"
+                            TickFrequency="{Binding Step}" IsSnapToTickEnabled="True"
+                            Value="{Binding Value, Mode=TwoWay}" />
+                    <TextBlock Grid.Column="1" Classes="mono faint" Text="{Binding Display}"
+                               Margin="6,0,0,0" VerticalAlignment="Center" />
+                </Grid>
+            </Grid>
+        </DataTemplate>
+    </Window.Resources>
+
+    <Grid RowDefinitions="44,24,*,Auto">
+
+        <Border Grid.Row="0" Background="{DynamicResource DeepBrush}"
+                BorderBrush="{DynamicResource LineSoftBrush}" BorderThickness="0,0,0,1">
+            <Grid ColumnDefinitions="*,Auto" Margin="16,0,10,0">
+                <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                    <Path Data="M0,4 L4,0 L8,4 L4,8 Z" Fill="{DynamicResource SoulBrush}"
+                          Width="9" Height="9" Stretch="Fill" />
+                    <TextBlock Classes="brand" Text="HOLLOWWORK" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                    <Button Classes="ghost" Content="BACKUP" Click="OnBackupClicked" />
+                    <Button Classes="primary" Content="OPEN" Click="OnOpenClicked" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <TextBlock Grid.Row="1" Classes="mono faint" Text="{Binding ArchiveLabel}"
+                   Margin="18,4,18,0" TextTrimming="CharacterEllipsis" />
+
+        <Grid Grid.Row="2" RowDefinitions="Auto,*">
+            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="18,12,18,8">
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <TextBlock Classes="chronicle" Text="PATCHES" FontSize="22" />
+                    <TextBlock Classes="mono faint" Text="{Binding SelectionLabel}" VerticalAlignment="Bottom" />
+                </StackPanel>
+                <ComboBox Grid.Column="1" Width="86" Height="28" FontSize="11"
+                          ItemsSource="{Binding Games}" SelectedItem="{Binding SelectedGame}" />
+            </Grid>
+
+            <ScrollViewer Grid.Row="1">
+                <ItemsControl ItemsSource="{Binding Patches}" Margin="14,0,14,8">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:PatchItemViewModel">
+                            <Border BorderBrush="{DynamicResource LineSoftBrush}" BorderThickness="0,0,0,1"
+                                    Padding="4,8">
+                                <StackPanel Spacing="2">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Spacing="2">
+                                            <TextBlock Text="{Binding Name}" FontSize="12" />
+                                            <TextBlock Classes="mono faint" Text="{Binding Meta}"
+                                                       TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+                                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                      OnContent="" OffContent="" VerticalAlignment="Center" />
+                                    </Grid>
+                                    <ItemsControl ItemsSource="{Binding Parameters}"
+                                                  IsVisible="{Binding IsSelected}"
+                                                  ItemTemplate="{StaticResource CompactParameterTemplate}" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Grid>
+
+        <Border Grid.Row="3" Background="{DynamicResource DeepBrush}"
+                BorderBrush="{DynamicResource LineSoftBrush}" BorderThickness="0,1,0,0" Padding="16,10">
+            <Grid RowDefinitions="Auto,Auto" RowSpacing="8">
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                    <StackPanel Spacing="2">
+                        <TextBlock Classes="mono faint" Text="{Binding PlanSummary}" />
+                        <TextBlock Classes="mono faint" Text="{Binding StatusLabel}" TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                        <Button Content="PLAN" Click="OnPlanClicked" />
+                        <Button Classes="primary" Content="{Binding ApplyLabel}"
+                                IsEnabled="{Binding CanApply}" Click="OnApplyClicked" />
+                    </StackPanel>
+                </Grid>
+                <TextBlock Grid.Row="1" Classes="mono faint" Text="{Binding BackupNotice}" />
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
