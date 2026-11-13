@@ -28,6 +28,30 @@ public class ArchiveBackupTests
     }
 
     [Fact]
+    public void Restore_copies_the_backup_back()
+    {
+        var root = Path.Combine(Path.GetTempPath(), $"hollowwork-backup-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(root);
+        try
+        {
+            var archive = Path.Combine(root, "Content.ggpk");
+            var original = "GGPK"u8.ToArray().Concat(new byte[64]).ToArray();
+            File.WriteAllBytes(archive, original);
+
+            var manifest = ArchiveBackup.Create(archive, Path.Combine(root, "backups"));
+            File.WriteAllBytes(archive, "corrupted"u8.ToArray());
+
+            ArchiveBackup.Restore(manifest, archive);
+
+            Assert.Equal(original, File.ReadAllBytes(archive));
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
     public void Refuses_missing_archive()
     {
         var root = Path.Combine(Path.GetTempPath(), $"hollowwork-backup-{Guid.NewGuid():N}");

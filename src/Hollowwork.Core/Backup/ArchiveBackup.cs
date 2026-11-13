@@ -47,6 +47,25 @@ public static class ArchiveBackup
         return manifest;
     }
 
+    public static void Restore(BackupManifest manifest, string archivePath)
+    {
+        ArgumentNullException.ThrowIfNull(manifest);
+        ArgumentException.ThrowIfNullOrWhiteSpace(archivePath);
+
+        if (!File.Exists(manifest.BackupPath))
+        {
+            throw new FileNotFoundException("Backup file not found.", manifest.BackupPath);
+        }
+
+        var backupHash = HashFile(manifest.BackupPath);
+        if (!string.Equals(backupHash, manifest.Sha256, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new IOException("Backup is corrupted: hash does not match the manifest.");
+        }
+
+        File.Copy(manifest.BackupPath, archivePath, overwrite: true);
+    }
+
     public static string HashFile(string path)
     {
         using var stream = File.OpenRead(path);
