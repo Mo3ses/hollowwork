@@ -8,7 +8,8 @@ public sealed record PatchTarget(string Root, IReadOnlyList<string> Extensions, 
 public sealed record PatchOperation(
     [property: JsonPropertyName("type")] string Type,
     [property: JsonPropertyName("from")] string? From = null,
-    [property: JsonPropertyName("to")] string? To = null);
+    [property: JsonPropertyName("to")] string? To = null,
+    [property: JsonPropertyName("unless")] string? Unless = null);
 
 public sealed record PatchDefinition(
     [property: JsonPropertyName("id")] string Id,

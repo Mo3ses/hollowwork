@@ -114,6 +114,25 @@ public class PatchPlannerTests
     }
 
     [Fact]
+    public void Skips_operation_when_guard_is_present()
+    {
+        using var archive = new MemoryArchive();
+        archive.AddText("metadata/ui/loadingstate/a.ui", "begin Frame\r\n\tvisible = false;\r\n");
+
+        var patch = new PatchDefinition(
+            "no-loading",
+            "No loading",
+            "test",
+            "poe1",
+            [new PatchTarget("metadata/ui/loadingstate", [".ui"])],
+            [new PatchOperation("replace", "begin Frame", "begin Frame\r\n\tvisible = false;", "visible = false;")]);
+
+        var plan = new PatchPlanner().Plan(archive, [patch]);
+
+        Assert.True(plan.IsEmpty);
+    }
+
+    [Fact]
     public void Empty_plan_when_nothing_matches()
     {
         using var archive = new MemoryArchive();

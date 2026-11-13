@@ -1,0 +1,17 @@
+{
+  "id": "poe1.no-loading-screen",
+  "name": "No loading screen",
+  "description": "Hides loading and waiting screen frames.",
+  "game": "poe1",
+  "targets": [
+    { "root": "metadata/ui/loadingstate", "extensions": [".ui"] }
+  ],
+  "operations": [
+    {
+      "type": "replace",
+      "from": "begin Frame",
+      "to": "begin Frame\r\n\tvisible = false;\r\n\tmouse_enabled = false;",
+      "unless": "visible = false;"
+    }
+  ]
+}
