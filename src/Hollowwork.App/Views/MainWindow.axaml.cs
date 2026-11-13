@@ -9,25 +9,33 @@ public partial class MainWindow : Window
 {
     private readonly MainWindowViewModel _viewModel = new();
 
-    public MainWindow() : this(null, false)
+    public MainWindow() : this(null, false, null)
     {
     }
 
-    public MainWindow(string? initialPath, bool openBackups = false)
+    public MainWindow(string? initialPath, bool openBackups = false, string? initialFile = null)
     {
         InitializeComponent();
         DataContext = _viewModel;
         Closed += (_, _) => _viewModel.Dispose();
 
-        if (!string.IsNullOrWhiteSpace(initialPath))
+        Opened += async (_, _) =>
         {
-            Opened += async (_, _) => await _viewModel.OpenAsync(initialPath);
-        }
+            if (!string.IsNullOrWhiteSpace(initialPath))
+            {
+                await _viewModel.OpenAsync(initialPath);
+            }
 
-        if (openBackups)
-        {
-            Opened += async (_, _) => await ShowBackupsAsync();
-        }
+            if (!string.IsNullOrWhiteSpace(initialFile))
+            {
+                await _viewModel.SelectFileAsync(initialFile);
+            }
+
+            if (openBackups)
+            {
+                await ShowBackupsAsync();
+            }
+        };
     }
 
     private async void OnOpenGgpkClicked(object? sender, RoutedEventArgs e)
@@ -100,6 +108,28 @@ public partial class MainWindow : Window
         {
             _viewModel.CloseArchive();
             await _viewModel.OpenAsync(inputPath);
+        }
+    }
+
+    private async void OnExportClicked(object? sender, RoutedEventArgs e)
+    {
+        var selected = _viewModel.SelectedPath;
+        var top = TopLevel.GetTopLevel(this);
+        if (selected is null || top is null)
+        {
+            return;
+        }
+
+        var file = await top.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Export file",
+            SuggestedFileName = Path.GetFileName(selected),
+            DefaultExtension = Path.GetExtension(selected).TrimStart('.'),
+        });
+
+        if (file?.TryGetLocalPath() is { } destination)
+        {
+            await _viewModel.ExportAsync(destination);
         }
     }
 

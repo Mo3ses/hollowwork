@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <PackageReference Include="LibGGPK3.LibBundledGGPK3" Version="2.7.5" />
+    <PackageReference Include="Pfim" Version="0.11.4" />
   </ItemGroup>
 
   <ItemGroup>

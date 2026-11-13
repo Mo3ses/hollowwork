@@ -1,12 +1,17 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using Avalonia;
+using Avalonia.Media.Imaging;
+using Avalonia.Platform;
 using Hollowwork.App;
 using Hollowwork.Core.Archives;
 using Hollowwork.Core.Backup;
 using Hollowwork.Core.Oodle;
 using Hollowwork.Core.Patches;
 using Hollowwork.Core.Text;
+using Hollowwork.Core.Textures;
 using Hollowwork.Patches;
 
 namespace Hollowwork.App.ViewModels;
@@ -18,6 +23,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     private const int PreviewLimit = 200_000;
 
     private IArchiveSession? _session;
+    private WriteableBitmap? _previewImage;
+    private byte[]? _selectedBytes;
+    private string? _selectedPath;
     private PatchPlan? _plan;
     private string? _currentDirectory;
     private bool _applyArmed;
@@ -131,6 +139,29 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         private set => Set(ref _isBusy, value);
     }
 
+    public WriteableBitmap? PreviewImage
+    {
+        get => _previewImage;
+        private set
+        {
+            if (ReferenceEquals(_previewImage, value))
+            {
+                return;
+            }
+
+            _previewImage?.Dispose();
+            _previewImage = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(HasImage));
+        }
+    }
+
+    public bool HasImage => _previewImage is not null;
+
+    public string? SelectedPath => _selectedPath;
+
+    public bool CanExport => _selectedBytes is not null;
+
     public string SelectionLabel => $"{Patches.Count(patch => patch.IsSelected)} SELECTED";
 
     public string? CurrentInputPath { get; private set; }
@@ -161,6 +192,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         ResetPlan();
         PreviewHeader = "NO FILE SELECTED";
         PreviewText = string.Empty;
+        PreviewImage = null;
+        _selectedBytes = null;
+        _selectedPath = null;
+        OnPropertyChanged(nameof(CanExport));
 
         IArchiveSession? session = null;
         try
@@ -181,7 +216,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
             CountLabel = $"{paths.Count:N0} FILES";
             BackupNotice = _session.Kind == ArchiveKind.Ggpk
                 ? "BACKUP · FULL ARCHIVE"
-                : "BACKUP · INDEX ONLY";
+                : "BACKUP · INDEX + LIBGGPK3";
             StatusLabel = "READY · OFFLINE";
 
             Directories.Clear();
@@ -254,6 +289,21 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
                 _session.TryRead(path, out var content);
                 return content;
             });
+
+            _selectedBytes = bytes;
+            _selectedPath = path;
+            OnPropertyChanged(nameof(CanExport));
+            OnPropertyChanged(nameof(SelectedPath));
+            PreviewImage = null;
+            PreviewText = string.Empty;
+
+            if (path.EndsWith(".dds", StringComparison.OrdinalIgnoreCase)
+                && TextureDecoder.TryDecodeDds(bytes, out var texture))
+            {
+                PreviewImage = ToBitmap(texture);
+                PreviewHeader = $"{path} · {texture.Width}×{texture.Height} · {bytes.Length:N0} BYTES";
+                return;
+            }
 
             PreviewHeader = $"{path} · {bytes.Length:N0} BYTES";
 
@@ -385,10 +435,39 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
+    public async Task ExportAsync(string destination)
+    {
+        if (_selectedBytes is null)
+        {
+            return;
+        }
+
+        await File.WriteAllBytesAsync(destination, _selectedBytes);
+        StatusLabel = $"EXPORTED · {destination}";
+    }
+
     public void Dispose()
     {
         _session?.Dispose();
         _session = null;
+    }
+
+    private static WriteableBitmap ToBitmap(DecodedTexture texture)
+    {
+        var bitmap = new WriteableBitmap(
+            new PixelSize(texture.Width, texture.Height),
+            new Vector(96, 96),
+            PixelFormat.Bgra8888,
+            AlphaFormat.Unpremul);
+
+        using var buffer = bitmap.Lock();
+        var rowBytes = texture.Width * 4;
+        for (var y = 0; y < texture.Height; y++)
+        {
+            Marshal.Copy(texture.Bgra, y * rowBytes, IntPtr.Add(buffer.Address, y * buffer.RowBytes), rowBytes);
+        }
+
+        return bitmap;
     }
 
     private void LoadPatches()

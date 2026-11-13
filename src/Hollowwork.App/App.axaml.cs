@@ -17,8 +17,21 @@ public partial class App : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var args = desktop.Args ?? [];
-            var initialPath = args.FirstOrDefault(argument => !argument.StartsWith('-'));
-            desktop.MainWindow = new MainWindow(initialPath, args.Contains("--backups"));
+            string? initialPath = null;
+            string? initialFile = null;
+            for (var i = 0; i < args.Length; i++)
+            {
+                if (args[i] == "--file" && i + 1 < args.Length)
+                {
+                    initialFile = args[++i];
+                }
+                else if (!args[i].StartsWith('-') && initialPath is null)
+                {
+                    initialPath = args[i];
+                }
+            }
+
+            desktop.MainWindow = new MainWindow(initialPath, args.Contains("--backups"), initialFile);
         }
 
         base.OnFrameworkInitializationCompleted();
