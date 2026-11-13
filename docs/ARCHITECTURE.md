@@ -14,26 +14,31 @@ definitions). `Patches` has no UI or archive dependency.
 ## Layers
 
 1. **Archive layer** (`Core/Archives`)
-   - `ArchiveProbe` detects GGPK vs bundle index without parsing.
-   - `ArchiveSession` (M1) wraps LibGGPK3 and exposes a read/write facade.
-   - No other layer references LibGGPK3 directly.
+   - `ArchiveProbe` detects GGPK vs Bundles2 without parsing.
+   - `GgpkArchiveSession` wraps LibGGPK3; `BundleArchiveSession` wraps LibBundle3.
+   - `ArchiveSessionFactory` picks the session from the path.
+   - No other layer references LibGGPK3/LibBundle3 directly.
 
-2. **Patch layer** (`Patches`)
+2. **Oodle resolver** (`Core/Oodle`)
+   - `OodleLibrary` registers a `DllImport` resolver for `oo2core` before LibBundle3 loads.
+   - The binary is user-provided and never committed (`docs/OODLE.md`).
+
+3. **Patch layer** (`Patches`)
    - `PatchDefinition`, `PatchTarget`, `PatchOperation`.
    - `PatchLoader` parses and validates JSON.
    - Operations are pure text transforms; they never touch disk.
 
-3. **Engine** (`Core/Patches`, M1)
+4. **Engine** (`Core/Patches`)
    - Resolves targets against the archive tree.
    - Produces a `PatchPlan` (file, line, before/after) without writing.
    - Applies the plan atomically, one file at a time, with a journal.
 
-4. **Backup** (`Core/Backup`, M1)
+5. **Backup** (`Core/Backup`)
    - Copies the archive to `backups/<utc timestamp>/`.
    - Writes a SHA-256 manifest and verifies the copy.
    - Restore is a separate, confirmed action.
 
-5. **UI** (`App`)
+6. **UI** (`App`)
    - Three-pane workbench: rail, explorer, editor, patch drawer.
    - No business logic in views.
 

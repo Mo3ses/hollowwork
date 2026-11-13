@@ -8,9 +8,9 @@ Hollowwork opens `Content.ggpk` and `_.index.bin`, lets you browse what is insid
 declarative patches with a mandatory dry run and a verified backup. It works offline and never
 touches the game process.
 
-> Status: **M1 — patch engine**. The GGPK session, dry-run planner, applier, path protection and
-> hash-verified backup are implemented and tested. UI wiring and the file browser land next
-> (see `docs/ROADMAP.md`).
+> Status: **bundles + patch engine**. GGPK and Bundles2 sessions, dry-run planner, applier,
+> path protection and hash-verified backup are implemented and tested. UI wiring and the file
+> browser land next (see `docs/ROADMAP.md`).
 
 ## Why
 
@@ -23,7 +23,9 @@ Modding client assets should be reversible and boring:
 
 ## Features
 
-- Open `Content.ggpk` (standalone) and `_.index.bin` (Steam bundles).
+- Open `Content.ggpk` (standalone) and `_.index.bin` / `Bundles2` (Steam).
+- Bundles2 read and write on Linux and Windows, using a user-provided Oodle library
+  (`docs/OODLE.md`); Proton is the fallback.
 - Tree explorer with text and DDS preview.
 - Declarative patch engine: replace, extension swap, boolean flags, block stripping.
 - Path protection: keep chosen paths out of every patch.
