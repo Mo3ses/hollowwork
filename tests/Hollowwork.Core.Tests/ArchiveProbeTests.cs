@@ -51,3 +51,55 @@ public class ArchiveProbeTests
         }
     }
 }
+
+public class BundlesProbeTests
+{
+    [Fact]
+    public void Detects_bundles_directory()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), $"hollowwork-bundles-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(dir);
+        try
+        {
+            File.WriteAllBytes(Path.Combine(dir, "_.index.bin"), [0, 0, 0, 0]);
+            Assert.Equal(ArchiveKind.BundleIndex, ArchiveProbe.DetectKind(dir));
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void Unknown_directory_without_index()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), $"hollowwork-bundles-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(dir);
+        try
+        {
+            Assert.Equal(ArchiveKind.Unknown, ArchiveProbe.DetectKind(dir));
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+}
+
+public class ArchiveSessionFactoryTests
+{
+    [Fact]
+    public void Rejects_unknown_archive()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"hollowwork-{Guid.NewGuid():N}.bin");
+        try
+        {
+            File.WriteAllBytes(path, [1, 2, 3, 4]);
+            Assert.Throws<NotSupportedException>(() => ArchiveSessionFactory.Open(path));
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+}

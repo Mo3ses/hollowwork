@@ -29,8 +29,10 @@
 
 ## M3 — bundles and polish
 
-- [ ] `_.index.bin` and bundle reading
-- [ ] Oodle via the game-provided library (never redistributed)
+- [x] `_.index.bin` read and write (`BundleArchiveSession`)
+- [x] Oodle resolver for a user-provided library (never redistributed)
+- [x] Read validated on a real PoE 1 `Bundles2` install
+- [x] Write validated on a copied index + bundle
 - [ ] Minimap colours and camera tweaks
 - [ ] Portable builds for Linux and Windows
 
