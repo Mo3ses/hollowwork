@@ -13,6 +13,7 @@ public sealed record FlipLoadProgress(int Done, int Total);
 public sealed class CurrencyExchangeClient : IDisposable
 {
     private const string Endpoint = "https://web.poecdn.com/api/currency-exchange";
+    private const int CacheKeepHours = 24;
     private readonly HttpClient _http;
     private readonly string? _cacheRoot;
 
@@ -151,7 +152,31 @@ public sealed class CurrencyExchangeClient : IDisposable
         }
 
         progress?.Report(new FlipLoadProgress(count, count));
+        PruneCache(poe2);
         return hours;
+    }
+
+    private void PruneCache(bool poe2)
+    {
+        if (string.IsNullOrWhiteSpace(_cacheRoot))
+        {
+            return;
+        }
+
+        var directory = Path.Combine(_cacheRoot, poe2 ? "poe2" : "poe1");
+        if (!Directory.Exists(directory))
+        {
+            return;
+        }
+
+        var cutoff = LatestHour() - CacheKeepHours * 3600L;
+        foreach (var file in Directory.EnumerateFiles(directory, "*.json"))
+        {
+            if (long.TryParse(Path.GetFileNameWithoutExtension(file), out var hour) && hour < cutoff)
+            {
+                TryDelete(file);
+            }
+        }
     }
 
     private static void TryDelete(string path)
@@ -161,6 +186,9 @@ public sealed class CurrencyExchangeClient : IDisposable
             File.Delete(path);
         }
         catch (IOException)
+        {
+        }
+        catch (UnauthorizedAccessException)
         {
         }
     }
