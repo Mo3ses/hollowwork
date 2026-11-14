@@ -19,7 +19,8 @@ Modding client assets should be reversible and boring:
 
 - **Backup first.** Every write is preceded by a hash-verified copy of the archive.
 - **Dry run always.** You see the exact files and lines a patch would touch before applying.
-- **No network.** No update checks, no telemetry, no account. The app runs offline.
+- **Offline by default.** No update checks, no telemetry, no account. Patches, browsing and
+  backups work with no network. The optional FLIP tab touches only the public hourly market API.
 - **Data, not magic.** Patches are JSON files you can read, diff and write yourself.
 
 ## Features
@@ -32,9 +33,22 @@ Modding client assets should be reversible and boring:
 - Path protection: keep chosen paths out of every patch.
 - Backup and restore with SHA-256 manifests.
 - Profiles per game.
+- FLIP tab: read-only currency market snapshot with spread, volume, stock, trend and a
+  confidence rating. Hourly responses are cached under `~/.local/share/Hollowwork/market`.
 
-Planned after v1: minimap colours, camera tweaks, MTX preview, currency helpers.
-Automation of gameplay is **out of scope** for this project.
+Planned after v1: minimap colours, camera tweaks, MTX preview.
+Automation of gameplay, order placement and trade bots are **out of scope** for this project.
+
+## Currency FLIP
+
+Open the **FLIP** tab, pick a league and press **REFRESH**. The app reads the public
+`web.poecdn.com/api/currency-exchange` aggregate for the last six hours, caches it locally and
+ranks pairs by a conservative liquidity-adjusted score.
+
+The numbers are **estimates**, not a live order book: the API publishes an hourly aggregate about
+five minutes after each hour. The tool never places orders and never touches the game process.
+Confirm the current rate at Faustus in game before trading. The "ceiling" is capital × spread;
+real fills capture only part of it.
 
 ## Build
 
@@ -65,7 +79,7 @@ The backup is a full copy of the archive, so make sure there is disk space.
 
 ```
 src/Hollowwork.App       Avalonia UI
-src/Hollowwork.Core      archive access, patch execution, backup
+src/Hollowwork.Core      archive access, patch execution, backup, market data
 src/Hollowwork.Patches   patch model, loader and validation
 src/Hollowwork.Smoke     read/write smoke check for real archives
 patches/poe1, patches/poe2
