@@ -71,6 +71,18 @@ public partial class CompactWindow : Window
         }
     }
 
+    private void OnPatchesTabClicked(object? sender, RoutedEventArgs e) =>
+        _viewModel.SelectPatchTab();
+
+    private async void OnFlipTabClicked(object? sender, RoutedEventArgs e)
+    {
+        _viewModel.SelectFlipTab();
+        await _viewModel.Flip.ActivateAsync();
+    }
+
+    private async void OnFlipRefreshClicked(object? sender, RoutedEventArgs e) =>
+        await _viewModel.Flip.RefreshAsync();
+
     private async void OnPlanClicked(object? sender, RoutedEventArgs e) => await _viewModel.PlanAsync();
 
     private async void OnApplyClicked(object? sender, RoutedEventArgs e) => await _viewModel.ApplyAsync();
