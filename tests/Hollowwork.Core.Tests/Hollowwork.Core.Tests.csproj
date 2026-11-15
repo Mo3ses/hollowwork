@@ -23,4 +23,10 @@
     <ProjectReference Include="..\..\src\Hollowwork.Patches\Hollowwork.Patches.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="..\..\patches\**\*.json"
+             Link="patches\%(RecursiveDir)%(Filename)%(Extension)"
+             CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>
