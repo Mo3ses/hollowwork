@@ -89,6 +89,15 @@ public partial class CompactWindow : Window
     private async void OnFlipRefreshClicked(object? sender, RoutedEventArgs e) =>
         await _viewModel.Flip.RefreshAsync();
 
+    private void OnLiquidStrategyClicked(object? sender, RoutedEventArgs e) =>
+        _viewModel.Flip.SetStrategy("liquid");
+
+    private void OnBalancedStrategyClicked(object? sender, RoutedEventArgs e) =>
+        _viewModel.Flip.SetStrategy("balanced");
+
+    private void OnAggressiveStrategyClicked(object? sender, RoutedEventArgs e) =>
+        _viewModel.Flip.SetStrategy("aggressive");
+
     private async void OnPlanClicked(object? sender, RoutedEventArgs e) => await _viewModel.PlanAsync();
 
     private async void OnApplyClicked(object? sender, RoutedEventArgs e) => await _viewModel.ApplyAsync();

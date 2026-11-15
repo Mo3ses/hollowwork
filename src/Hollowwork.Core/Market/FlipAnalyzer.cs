@@ -4,7 +4,11 @@ public sealed record FlipOptions(
     string League,
     int MinVolumePerHour = 100,
     double CapitalChaos = 500,
-    int MaxResults = 40);
+    int MaxResults = 40,
+    int MinStars = 1,
+    double MaxSpread = double.PositiveInfinity,
+    double MinTrend = double.NegativeInfinity,
+    string? Category = null);
 
 /// <summary>
 /// One ranked pair. All monetary values are estimates derived from hourly
@@ -34,7 +38,8 @@ public sealed record FlipOpportunity(
     double ProfitCeilingChaos,
     int HoursSeen,
     int Stars,
-    double Score)
+    double Score,
+    string Category = "other")
 {
     public bool HasChaosValue => PriceB > 0;
 }
@@ -48,6 +53,10 @@ public sealed record FlipOpportunity(
 public static class FlipAnalyzer
 {
     public const string ChaosPath = "Metadata/Items/Currency/CurrencyRerollRare";
+
+    // One mispriced order can make the hourly low/high useless. Ignore those
+    // hours when estimating a rate and when building the chaos price graph.
+    private const double MaxHourlyRange = 3.0;
 
     public static IReadOnlyList<FlipOpportunity> Analyze(
         IReadOnlyList<CurrencyExchangeHour> hours,
@@ -83,13 +92,25 @@ public static class FlipAnalyzer
             return [];
         }
 
-        var latestQuotes = groups.Values
-            .Select(list => list.MaxBy(quote => quote.HourUtc))
-            .Where(quote => quote is not null)
-            .Cast<MarketQuote>()
-            .ToList();
+        var representatives = new List<(MarketQuote Quote, double Mid)>();
+        foreach (var list in groups.Values)
+        {
+            var clean = list
+                .Where(IsReasonable)
+                .OrderBy(quote => quote.HourUtc)
+                .ToList();
 
-        var prices = BuildChaosPrices(latestQuotes);
+            if (clean.Count == 0)
+            {
+                continue;
+            }
+
+            var latest = clean[^1];
+            var mid = Median(clean.Select(MidRate).ToList());
+            representatives.Add((latest, mid));
+        }
+
+        var prices = BuildChaosPrices(representatives);
         var results = new List<FlipOpportunity>(groups.Count);
 
         foreach (var group in groups.Values)
@@ -120,6 +141,13 @@ public static class FlipAnalyzer
         return low > 0 && high > 0 ? (low + high) / 2 : 0;
     }
 
+    private static bool IsReasonable(MarketQuote quote)
+    {
+        var low = Rate(quote.LowRatioA, quote.LowRatioB);
+        var high = Rate(quote.HighRatioA, quote.HighRatioB);
+        return low > 0 && high >= low && high / low <= MaxHourlyRange;
+    }
+
     private static FlipOpportunity? AnalyzePair(
         IReadOnlyList<MarketQuote> quotes,
         IReadOnlyDictionary<string, double> prices,
@@ -135,8 +163,13 @@ public static class FlipAnalyzer
                 continue;
             }
 
-            var mid = (low + high) / 2;
             var spread = high / low - 1;
+            if (spread > MaxHourlyRange)
+            {
+                continue;
+            }
+
+            var mid = (low + high) / 2;
             if (mid <= 0 || spread <= 0)
             {
                 continue;
@@ -151,6 +184,13 @@ public static class FlipAnalyzer
         }
 
         var latest = hourly[^1];
+        var category = CategoryOf(latest.Quote.ItemA, latest.Quote.ItemB);
+        if (!string.IsNullOrEmpty(options.Category) &&
+            !string.Equals(category, options.Category, StringComparison.Ordinal))
+        {
+            return null;
+        }
+
         var medianSpread = Median(hourly.Select(item => item.Spread).ToList());
         if (medianSpread < 0.005)
         {
@@ -194,9 +234,17 @@ public static class FlipAnalyzer
             confidence = Math.Min(confidence, 0.55);
         }
 
-        var trend = hourly.Count > 1 && hourly[0].Mid > 0
-            ? latest.Mid / hourly[0].Mid - 1
-            : 0;
+        var trend = 0d;
+        if (hourly.Count > 1)
+        {
+            var half = hourly.Count / 2;
+            var first = Median(hourly.Take(half).Select(item => item.Mid).ToList());
+            var last = Median(hourly.Skip(hourly.Count - half).Select(item => item.Mid).ToList());
+            if (first > 0)
+            {
+                trend = last / first - 1;
+            }
+        }
 
         var stars = 1 + (int)Math.Round(confidence * 4, MidpointRounding.AwayFromZero);
         if (trend < -0.15 || rangeWidth >= 3)
@@ -208,7 +256,12 @@ public static class FlipAnalyzer
 
         // Show only rows the analyzer actually trusts. Wide hourly ranges are
         // usually one mispriced order, not a tradable spread.
-        if (stars < 3)
+        if (stars < 3 || stars < options.MinStars)
+        {
+            return null;
+        }
+
+        if (medianSpread > options.MaxSpread || trend < options.MinTrend)
         {
             return null;
         }
@@ -219,11 +272,12 @@ public static class FlipAnalyzer
             score *= Math.Max(0.25, 1 + trend);
         }
 
+        var rate = Median(hourly.Select(item => item.Mid).ToList());
         return new FlipOpportunity(
             latest.Quote.MarketId,
             latest.Quote.ItemA,
             latest.Quote.ItemB,
-            latest.Mid,
+            rate,
             Rate(latest.Quote.LowRatioA, latest.Quote.LowRatioB),
             Rate(latest.Quote.HighRatioA, latest.Quote.HighRatioB),
             medianSpread,
@@ -242,7 +296,36 @@ public static class FlipAnalyzer
             profitCeiling,
             hourly.Count,
             stars,
-            score);
+            score,
+            category);
+    }
+
+    public static string CategoryOf(string itemA, string itemB)
+    {
+        var text = itemA + "|" + itemB;
+        if (text.Contains("DivinationCard", StringComparison.OrdinalIgnoreCase))
+        {
+            return "cards";
+        }
+
+        if (text.Contains("UberBossKey", StringComparison.OrdinalIgnoreCase) ||
+            (text.Contains("MapFragments", StringComparison.OrdinalIgnoreCase) &&
+             text.Contains("Key", StringComparison.OrdinalIgnoreCase)))
+        {
+            return "keys";
+        }
+
+        if (text.Contains("/Gems/", StringComparison.OrdinalIgnoreCase))
+        {
+            return "gems";
+        }
+
+        if (text.Contains("/Currency/", StringComparison.OrdinalIgnoreCase))
+        {
+            return "currency";
+        }
+
+        return "other";
     }
 
     private static double Confidence(int hoursSeen, double rangeWidth, double volumeChaos)
@@ -274,15 +357,15 @@ public static class FlipAnalyzer
         return Math.Sqrt(variance) / mean;
     }
 
-    private static Dictionary<string, double> BuildChaosPrices(IReadOnlyList<MarketQuote> quotes)
+    private static Dictionary<string, double> BuildChaosPrices(
+        IReadOnlyList<(MarketQuote Quote, double Mid)> quotes)
     {
         var edges = new Dictionary<string, Dictionary<string, (double Factor, double Volume)>>(
             StringComparer.Ordinal);
 
-        foreach (var quote in quotes)
+        foreach (var (quote, rate) in quotes)
         {
-            var rate = MidRate(quote);
-            if (rate <= 0)
+            if (rate <= 0 || !double.IsFinite(rate))
             {
                 continue;
             }

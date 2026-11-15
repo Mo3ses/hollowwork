@@ -144,6 +144,86 @@ public class CurrencyFlipTests
     }
 
     [Fact]
+    public void Outlier_hour_does_not_hide_a_liquid_pair()
+    {
+        var hours = new[]
+        {
+            Hour(100, Quote(100, Chaos, Divine, 90, 100, volumeA: 200_000, volumeB: 2_200, lowStockB: 10)),
+            Hour(200, Quote(200, Chaos, Divine, 92, 98, volumeA: 200_000, volumeB: 2_100, lowStockB: 10)),
+            Hour(300, Quote(300, Chaos, Divine, 95, 100, volumeA: 200_000, volumeB: 2_050, lowStockB: 10)),
+            Hour(400, Quote(400, Chaos, Divine, 1, 114, volumeA: 1_000_000, volumeB: 1_000, lowStockB: 10)),
+        };
+
+        var row = Assert.Single(FlipAnalyzer.Analyze(
+            hours,
+            new FlipOptions(
+                "Test",
+                MinVolumePerHour: 100_000,
+                CapitalChaos: 500,
+                MinStars: 4,
+                MaxSpread: 0.35,
+                MinTrend: -0.10)));
+
+        Assert.Equal(Divine, row.ItemB);
+        Assert.InRange(row.Rate, 90, 100);
+        Assert.InRange(row.Spread, 0.03, 0.20);
+        Assert.True(row.Stars >= 4);
+    }
+
+    [Fact]
+    public void Category_filter_separates_boss_keys()
+    {
+        const string key = "Metadata/Items/MapFragments/CurrencyUberBossKeySirus";
+        var hours = new[]
+        {
+            Hour(100,
+                Quote(100, Chaos, Divine, 90, 100, volumeA: 100_000, volumeB: 1_000, lowStockB: 10),
+                Quote(100, Chaos, key, 36, 45, volumeA: 100_000, volumeB: 35_000, lowStockB: 200)),
+        };
+
+        var keys = FlipAnalyzer.Analyze(
+            hours,
+            new FlipOptions("Test", MinVolumePerHour: 100, Category: "keys"));
+
+        var row = Assert.Single(keys);
+        Assert.Equal(key, row.ItemB);
+        Assert.Equal("keys", row.Category);
+
+        var currencies = FlipAnalyzer.Analyze(
+            hours,
+            new FlipOptions("Test", MinVolumePerHour: 100, Category: "currency"));
+
+        Assert.Single(currencies);
+        Assert.Equal(Divine, currencies[0].ItemB);
+    }
+
+    [Fact]
+    public void Strategy_cuts_filter_stars_and_spread()
+    {
+        const string regret = "Metadata/Items/Currency/CurrencyPassiveRefund";
+        var hours = new[]
+        {
+            Hour(100,
+                Quote(100, Chaos, Divine, 90, 100, volumeA: 100_000, volumeB: 1_000, lowStockB: 10),
+                Quote(100, Chaos, regret, 1, 2, volumeA: 1_000_000, volumeB: 500_000, lowStockB: 3_000)),
+        };
+
+        var rows = FlipAnalyzer.Analyze(
+            hours,
+            new FlipOptions(
+                "Test",
+                MinVolumePerHour: 100,
+                CapitalChaos: 500,
+                MinStars: 4,
+                MaxSpread: 0.5));
+
+        var row = Assert.Single(rows);
+        Assert.Equal(Divine, row.ItemB);
+        Assert.True(row.Stars >= 4);
+        Assert.True(row.Spread <= 0.5);
+    }
+
+    [Fact]
     public void Falling_prices_are_excluded()
     {
         var hours = new[]

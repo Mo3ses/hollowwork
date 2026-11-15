@@ -10,7 +10,6 @@ namespace Hollowwork.App.ViewModels;
 public sealed class FlipViewModel : INotifyPropertyChanged, IDisposable
 {
     private const int HourCount = 6;
-    private const int MinVolume = 100;
     private const double CapitalChaos = 500;
 
     private readonly CurrencyExchangeClient _client;
@@ -23,6 +22,8 @@ public sealed class FlipViewModel : INotifyPropertyChanged, IDisposable
     private string _loadedGame = string.Empty;
     private string _game = "poe1";
     private string? _selectedLeague;
+    private FlipStrategy _strategy = FlipStrategy.Liquid;
+    private string _selectedCategory = "All";
     private string _statusText = "READ-ONLY · OPEN THE TAB TO LOAD";
     private string _detailText = "Select a pair to see the estimate.";
     private FlipRowViewModel? _selectedOpportunity;
@@ -39,7 +40,33 @@ public sealed class FlipViewModel : INotifyPropertyChanged, IDisposable
 
     public ObservableCollection<FlipRowViewModel> Opportunities { get; } = [];
 
-    public string FilterText => $"MIN {MinVolume} c/h · {CapitalChaos:0}c CAPITAL";
+    public IReadOnlyList<string> Categories { get; } =
+        ["All", "Currency", "Boss keys", "Cards", "Gems", "Other"];
+
+    public bool IsLiquidStrategy => _strategy == FlipStrategy.Liquid;
+
+    public bool IsBalancedStrategy => _strategy == FlipStrategy.Balanced;
+
+    public bool IsAggressiveStrategy => _strategy == FlipStrategy.Aggressive;
+
+    public string StrategyHint
+    {
+        get
+        {
+            var thresholds = _strategy switch
+            {
+                FlipStrategy.Liquid => "4–5★ · volume ≥100k c/h · spread ≤35% · trend ≥-10%",
+                FlipStrategy.Balanced => "4–5★ · volume ≥25k c/h · spread ≤60% · trend ≥-15%",
+                _ => "3+★ · volume ≥5k c/h · spread ≤150% · trend ≥-30%",
+            };
+
+            return _selectedCategory == "All"
+                ? thresholds
+                : $"{thresholds} · {_selectedCategory.ToUpperInvariant()}";
+        }
+    }
+
+    public string FilterText => $"CAPITAL {CapitalChaos:0}c · MIN VOLUME FROM STRATEGY";
 
     public string Disclaimer =>
         "READ-ONLY · hourly aggregate, not a live order book. Ceiling is before gold and slippage.";
@@ -93,6 +120,45 @@ public sealed class FlipViewModel : INotifyPropertyChanged, IDisposable
             OnPropertyChanged();
             Analyze();
         }
+    }
+
+    public string SelectedCategory
+    {
+        get => _selectedCategory;
+        set
+        {
+            if (string.IsNullOrWhiteSpace(value) || _selectedCategory == value)
+            {
+                return;
+            }
+
+            _selectedCategory = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(StrategyHint));
+            Analyze();
+        }
+    }
+
+    public void SetStrategy(string strategy)
+    {
+        var next = strategy switch
+        {
+            "balanced" => FlipStrategy.Balanced,
+            "aggressive" => FlipStrategy.Aggressive,
+            _ => FlipStrategy.Liquid,
+        };
+
+        if (_strategy == next)
+        {
+            return;
+        }
+
+        _strategy = next;
+        OnPropertyChanged(nameof(IsLiquidStrategy));
+        OnPropertyChanged(nameof(IsBalancedStrategy));
+        OnPropertyChanged(nameof(IsAggressiveStrategy));
+        OnPropertyChanged(nameof(StrategyHint));
+        Analyze();
     }
 
     public FlipRowViewModel? SelectedOpportunity
@@ -272,9 +338,7 @@ public sealed class FlipViewModel : INotifyPropertyChanged, IDisposable
             return;
         }
 
-        var rows = FlipAnalyzer.Analyze(
-            _hours,
-            new FlipOptions(_selectedLeague, MinVolume, CapitalChaos));
+        var rows = FlipAnalyzer.Analyze(_hours, CurrentOptions(_selectedLeague));
 
         foreach (var row in rows)
         {
@@ -284,6 +348,44 @@ public sealed class FlipViewModel : INotifyPropertyChanged, IDisposable
         SelectedOpportunity = Opportunities.FirstOrDefault();
         NotifyEmpty();
     }
+
+    private FlipOptions CurrentOptions(string league) => _strategy switch
+    {
+        FlipStrategy.Liquid => new FlipOptions(
+            league,
+            MinVolumePerHour: 100_000,
+            CapitalChaos: CapitalChaos,
+            MinStars: 4,
+            MaxSpread: 0.35,
+            MinTrend: -0.10,
+            Category: CategoryFilter),
+        FlipStrategy.Balanced => new FlipOptions(
+            league,
+            MinVolumePerHour: 25_000,
+            CapitalChaos: CapitalChaos,
+            MinStars: 4,
+            MaxSpread: 0.60,
+            MinTrend: -0.15,
+            Category: CategoryFilter),
+        _ => new FlipOptions(
+            league,
+            MinVolumePerHour: 5_000,
+            CapitalChaos: CapitalChaos,
+            MinStars: 3,
+            MaxSpread: 1.50,
+            MinTrend: -0.30,
+            Category: CategoryFilter),
+    };
+
+    private string? CategoryFilter => _selectedCategory switch
+    {
+        "Currency" => "currency",
+        "Boss keys" => "keys",
+        "Cards" => "cards",
+        "Gems" => "gems",
+        "Other" => "other",
+        _ => null,
+    };
 
     private void NotifyEmpty()
     {
@@ -328,6 +430,13 @@ public sealed class FlipViewModel : INotifyPropertyChanged, IDisposable
         _cts?.Cancel();
         _cts?.Dispose();
         _client.Dispose();
+    }
+
+    private enum FlipStrategy
+    {
+        Liquid,
+        Balanced,
+        Aggressive,
     }
 }
 
