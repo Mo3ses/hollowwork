@@ -167,6 +167,27 @@
         <Setter Property="Background" Value="{DynamicResource LineBrush}" />
     </Style>
 
+    <Style Selector="Button.tab">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0,0,0,2" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="CornerRadius" Value="0" />
+        <Setter Property="Padding" Value="10,8" />
+        <Setter Property="FontFamily" Value="{DynamicResource MonoFont}" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="LetterSpacing" Value="1.4" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFaintBrush}" />
+    </Style>
+
+    <Style Selector="Button.tab:pointerover">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+    </Style>
+
+    <Style Selector="Button.tab.active">
+        <Setter Property="BorderBrush" Value="{DynamicResource SoulBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+    </Style>
+
     <Style Selector="Button.rail">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="2,0,0,0" />

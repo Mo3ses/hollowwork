@@ -51,6 +51,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     private string _applyLabel = "APPLY";
     private bool _canApply;
     private bool _isBusy;
+    private bool _isPatchTab = true;
     private string _selectedGame = "poe1";
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -59,6 +60,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     {
         _settings = SettingsStore.Load();
         _selectedGame = _settings.Game is "poe2" ? "poe2" : "poe1";
+        Flip.SetGame(_selectedGame);
         LoadPatches();
     }
 
@@ -69,6 +71,36 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     public ObservableCollection<PatchItemViewModel> Patches { get; } = [];
 
     public IReadOnlyList<string> Games { get; } = ["poe1", "poe2"];
+
+    public FlipViewModel Flip { get; } = new();
+
+    public bool IsPatchTab => _isPatchTab;
+
+    public bool IsFlipTab => !_isPatchTab;
+
+    public void SelectPatchTab()
+    {
+        if (_isPatchTab)
+        {
+            return;
+        }
+
+        _isPatchTab = true;
+        OnPropertyChanged(nameof(IsPatchTab));
+        OnPropertyChanged(nameof(IsFlipTab));
+    }
+
+    public void SelectFlipTab()
+    {
+        if (!_isPatchTab)
+        {
+            return;
+        }
+
+        _isPatchTab = false;
+        OnPropertyChanged(nameof(IsPatchTab));
+        OnPropertyChanged(nameof(IsFlipTab));
+    }
 
     public string SelectedGame
     {
@@ -85,6 +117,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
             SettingsStore.Save(_settings);
             OnPropertyChanged();
             LoadPatches();
+            Flip.SetGame(value);
         }
     }
 
@@ -545,6 +578,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     public void Dispose()
     {
         PersistParameters();
+        Flip.Dispose();
         _session?.Dispose();
         _session = null;
     }
