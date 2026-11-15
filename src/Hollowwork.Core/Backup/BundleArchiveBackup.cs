@@ -104,7 +104,11 @@ public static class BundleArchiveBackup
         var currentCustom = Path.Combine(target, CustomBundleDirectory);
         if (Directory.Exists(currentCustom))
         {
-            Directory.Move(currentCustom, Path.Combine(snapshot, CustomBundleDirectory));
+            // The game and the backup root can live on different partitions, and
+            // Directory.Move cannot cross filesystems. Copy the snapshot instead
+            // and only then remove the current custom bundles.
+            CopyDirectory(currentCustom, Path.Combine(snapshot, CustomBundleDirectory));
+            Directory.Delete(currentCustom, recursive: true);
         }
 
         File.Copy(indexCopy, currentIndex, overwrite: true);
