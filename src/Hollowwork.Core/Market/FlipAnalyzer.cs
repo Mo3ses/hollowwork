@@ -106,7 +106,8 @@ public static class FlipAnalyzer
         }
 
         return results
-            .OrderByDescending(item => item.Score)
+            .OrderByDescending(item => item.Stars)
+            .ThenByDescending(item => item.Score)
             .ThenByDescending(item => item.VolumeChaosPerHour)
             .Take(Math.Max(1, options.MaxResults))
             .ToList();

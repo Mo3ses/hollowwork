@@ -124,6 +124,26 @@ public class CurrencyFlipTests
     }
 
     [Fact]
+    public void Trusted_rows_sort_before_wide_spreads()
+    {
+        const string regret = "Metadata/Items/Currency/CurrencyPassiveRefund";
+        var hours = new[]
+        {
+            Hour(100,
+                Quote(100, Chaos, Divine, 90, 100, volumeA: 100_000, volumeB: 1_000, lowStockB: 10),
+                Quote(100, Chaos, regret, 1, 2, volumeA: 1_000_000, volumeB: 500_000, lowStockB: 3_000)),
+        };
+
+        var rows = FlipAnalyzer.Analyze(
+            hours,
+            new FlipOptions("Test", MinVolumePerHour: 100, CapitalChaos: 500));
+
+        Assert.Equal(2, rows.Count);
+        Assert.Equal(Divine, rows[0].ItemB);
+        Assert.True(rows[0].Stars > rows[1].Stars);
+    }
+
+    [Fact]
     public void Falling_prices_are_excluded()
     {
         var hours = new[]

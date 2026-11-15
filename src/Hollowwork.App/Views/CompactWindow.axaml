@@ -124,9 +124,31 @@
                     <TextBlock Classes="mono faint" Text="{Binding Flip.StatusText}"
                                TextTrimming="CharacterEllipsis" />
                 </StackPanel>
-                <Button Grid.Column="1" Classes="ghost" Content="REFRESH"
-                        VerticalAlignment="Top" IsEnabled="{Binding Flip.CanRefresh}"
-                        Click="OnFlipRefreshClicked" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6"
+                            VerticalAlignment="Top">
+                    <Button Classes="ghost" Content="GUIDE">
+                        <Button.Flyout>
+                            <Flyout Placement="Bottom">
+                                <StackPanel Width="300" Spacing="8">
+                                    <TextBlock Classes="eyebrow" Text="HOW TO USE" />
+                                    <TextBlock TextWrapping="Wrap"
+                                               Text="1. Pick a 4–5 star pair with high volume. Stars mean trusted data, not guaranteed profit." />
+                                    <TextBlock TextWrapping="Wrap"
+                                               Text="2. The rate is the hourly average. Use it to find the pair at Faustus in game." />
+                                    <TextBlock TextWrapping="Wrap"
+                                               Text="3. Read the live order book yourself. Buy low, sell high; the tool never places orders." />
+                                    <TextBlock TextWrapping="Wrap"
+                                               Text="4. Ceiling = 500c × spread. It ignores gold fees and slippage, so treat it as an upper bound." />
+                                    <TextBlock Classes="mono faint" TextWrapping="Wrap"
+                                               Text="Hourly data, not live prices. Start small and confirm the book." />
+                                </StackPanel>
+                            </Flyout>
+                        </Button.Flyout>
+                    </Button>
+                    <Button Classes="ghost" Content="REFRESH"
+                            IsEnabled="{Binding Flip.CanRefresh}"
+                            Click="OnFlipRefreshClicked" />
+                </StackPanel>
             </Grid>
 
             <Grid Grid.Row="1" ColumnDefinitions="*,Auto" Margin="18,4,18,8">

@@ -42,7 +42,7 @@ public sealed class FlipViewModel : INotifyPropertyChanged, IDisposable
     public string FilterText => $"MIN {MinVolume} c/h · {CapitalChaos:0}c CAPITAL";
 
     public string Disclaimer =>
-        "READ-ONLY · hourly aggregate, not a live order book. Confirm prices at Faustus before trading.";
+        "READ-ONLY · hourly aggregate, not a live order book. Ceiling is before gold and slippage.";
 
     public bool IsLoading
     {
@@ -361,7 +361,7 @@ public sealed class FlipRowViewModel
         DetailText =
             $"{RateSentence(nameA, nameB, opportunity.Rate)} · spread {opportunity.Spread * 100:0.#}% · {VolumeText} · {opportunity.HoursSeen}h · trend {TrendText}\n" +
             $"Stock {Compact(opportunity.LowStockB)} {nameB} · deploy {Compact(opportunity.DeployableChaos)}c · ceiling {Compact(opportunity.ProfitCeilingChaos)}c · confidence {opportunity.Confidence * 100:0}%\n" +
-            $"Buy {nameA} with {nameB}, sell at the higher end. Confirm the live order book in game.";
+            "Spread is the hourly low-high gap. Pick the side you can fund, confirm the live book in game, and place your own orders.";
 
         Tooltip =
             $"{CurrencyNames.Resolve(opportunity.ItemA, poe2)}\n{CurrencyNames.Resolve(opportunity.ItemB, poe2)}\n" +
