@@ -90,18 +90,34 @@ public static class BundleArchiveBackup
         }
 
         var target = Path.GetFullPath(bundlesDirectory);
+        var currentIndex = Path.Combine(target, "_.index.bin");
+        var currentCustom = Path.Combine(target, CustomBundleDirectory);
+
+        // Fail before deleting or overwriting anything if another process still
+        // holds the archive open (the game, or a Hollowwork session).
+        if (File.Exists(currentIndex))
+        {
+            EnsureWritable(currentIndex);
+        }
+
+        if (Directory.Exists(currentCustom))
+        {
+            foreach (var file in Directory.EnumerateFiles(currentCustom, "*", SearchOption.AllDirectories))
+            {
+                EnsureWritable(file);
+            }
+        }
+
         var snapshot = Path.Combine(
             backupDirectory,
             $"pre-restore-{DateTimeOffset.UtcNow:yyyyMMdd-HHmmss-fff}");
         Directory.CreateDirectory(snapshot);
 
-        var currentIndex = Path.Combine(target, "_.index.bin");
         if (File.Exists(currentIndex))
         {
             File.Copy(currentIndex, Path.Combine(snapshot, "_.index.bin"), overwrite: true);
         }
 
-        var currentCustom = Path.Combine(target, CustomBundleDirectory);
         if (Directory.Exists(currentCustom))
         {
             // The game and the backup root can live on different partitions, and
@@ -120,6 +136,11 @@ public static class BundleArchiveBackup
         }
 
         return snapshot;
+    }
+
+    private static void EnsureWritable(string path)
+    {
+        using var stream = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
     }
 
     private static void CopyDirectory(string source, string destination)
