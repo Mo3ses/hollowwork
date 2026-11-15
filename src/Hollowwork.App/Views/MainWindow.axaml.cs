@@ -127,12 +127,17 @@ public partial class MainWindow : Window
     private async Task ShowBackupsAsync()
     {
         var inputPath = _viewModel.CurrentInputPath;
-        var window = new BackupWindow(_viewModel.RestoreTarget, _viewModel.TargetKind);
-        var restored = await window.ShowDialog<bool>(this);
+        var target = _viewModel.RestoreTarget;
+        var kind = _viewModel.TargetKind;
 
-        if (restored && inputPath is not null)
+        // Release the archive handles before the restore can replace the index.
+        _viewModel.CloseArchive();
+
+        var window = new BackupWindow(target, kind);
+        await window.ShowDialog<bool>(this);
+
+        if (inputPath is not null)
         {
-            _viewModel.CloseArchive();
             await _viewModel.OpenAsync(inputPath);
         }
     }

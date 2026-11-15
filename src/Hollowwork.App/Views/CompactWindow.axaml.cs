@@ -61,12 +61,18 @@ public partial class CompactWindow : Window
     private async void OnBackupClicked(object? sender, RoutedEventArgs e)
     {
         var inputPath = _viewModel.CurrentInputPath;
-        var window = new BackupWindow(_viewModel.RestoreTarget, _viewModel.TargetKind);
-        var restored = await window.ShowDialog<bool>(this);
+        var target = _viewModel.RestoreTarget;
+        var kind = _viewModel.TargetKind;
 
-        if (restored && inputPath is not null)
+        // LibBundle3 keeps the index open. Release it before the restore dialog
+        // touches the same files, then reopen the archive afterwards.
+        _viewModel.CloseArchive();
+
+        var window = new BackupWindow(target, kind);
+        await window.ShowDialog<bool>(this);
+
+        if (inputPath is not null)
         {
-            _viewModel.CloseArchive();
             await _viewModel.OpenAsync(inputPath);
         }
     }

@@ -35,6 +35,39 @@ public class BundleArchiveBackupTests
     }
 
     [Fact]
+    public void Restore_refuses_a_locked_index_without_changing_files()
+    {
+        var root = NewTempDirectory();
+        try
+        {
+            var bundles = Path.Combine(root, "Bundles2");
+            var custom = Path.Combine(bundles, "LibGGPK3");
+            Directory.CreateDirectory(custom);
+            var indexPath = Path.Combine(bundles, "_.index.bin");
+            var customPath = Path.Combine(custom, "0.bundle.bin");
+            File.WriteAllBytes(indexPath, "index-v1"u8.ToArray());
+            File.WriteAllBytes(customPath, "bundle-v1"u8.ToArray());
+
+            var backup = BundleArchiveBackup.Create(bundles, Path.Combine(root, "backups"));
+
+            File.WriteAllBytes(indexPath, "index-v2"u8.ToArray());
+            File.WriteAllBytes(customPath, "bundle-v2"u8.ToArray());
+
+            using (var hold = new FileStream(indexPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+            {
+                Assert.Throws<IOException>(() => BundleArchiveBackup.Restore(backup, bundles));
+            }
+
+            Assert.Equal("index-v2"u8.ToArray(), File.ReadAllBytes(indexPath));
+            Assert.Equal("bundle-v2"u8.ToArray(), File.ReadAllBytes(customPath));
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
     public void Catalog_lists_bundle_backups()
     {
         var root = NewTempDirectory();
