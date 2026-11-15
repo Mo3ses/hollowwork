@@ -15,6 +15,38 @@ public class PatchOperationsTests
     }
 
     [Fact]
+    public void Fog_off_patch_preserves_fog_asset_references()
+    {
+        var patchPath = Path.Combine(AppContext.BaseDirectory, "patches", "poe1", "fog-off.json");
+        var patch = PatchLoader.Load(File.ReadAllText(patchPath));
+
+        var text = """
+        {
+          "fog": {
+            "exp_fog_is_enabled": true
+          },
+          "area": {
+            "player_environment_ao": "Metadata/Effects/Spells/monsters_effects/League_Hellscape/env/hellfog_03_embers_grd.ao"
+          }
+        }
+        """;
+
+        var changes = 0;
+        foreach (var operation in patch.Operations)
+        {
+            var result = PatchOperations.Apply(text, operation);
+            text = result.Text;
+            changes += result.Changes;
+        }
+
+        Assert.Equal(1, changes);
+        Assert.Contains("\"xog\"", text);
+        Assert.Contains("exp_fog_is_enabled", text);
+        Assert.Contains("hellfog_03_embers_grd.ao", text);
+        Assert.DoesNotContain("hellxog", text);
+    }
+
+    [Fact]
     public void Replace_is_case_sensitive_and_literal()
     {
         var result = PatchOperations.Apply("Fog fog f.o.g", new PatchOperation("replace", "fog", "xog"));

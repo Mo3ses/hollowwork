@@ -14,7 +14,7 @@ A patch is a JSON file under `patches/poe1/` or `patches/poe2/`. It is data, not
     { "root": "metadata/environmentsettings", "extensions": [".env"] }
   ],
   "operations": [
-    { "type": "replace", "from": "fog", "to": "xog" }
+    { "type": "replace", "from": "\"fog\"", "to": "\"xog\"" }
   ]
 }
 ```
@@ -45,8 +45,11 @@ All operations are applied in order, per file. The plan records:
 
 ```
 file  metadata/environmentsettings/...env
-  replace "fog" -> "xog"   3 hits
+  replace "\"fog\"" -> "\"xog\""   1 hit
 ```
+
+Quote JSON keys when the intent is to disable a block. A bare `fog` replacement also matches
+asset names such as `hellfog_03_embers_grd.ao`, and the game then fails to load the missing file.
 
 ## Rules
 
