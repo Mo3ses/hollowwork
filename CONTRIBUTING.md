@@ -43,6 +43,22 @@ string, a commit id), never at the product name.
 - No network calls, no telemetry, no process interaction.
 - Commit style: `feat:`, `fix:`, `docs:`, `test:`, `refactor:`.
 
+## Releasing
+
+Releases are cut from `main`, never from a branch, and publishing is deliberate: merging a pull
+request never produces a release.
+
+1. Bump `Version` in `Directory.Build.props` and add the matching section to `CHANGELOG.md`.
+2. Merge that change.
+3. Run the **release** workflow manually with the version, or push a `v<version>` tag. Both paths
+   build the same artifacts.
+4. The workflow builds `linux-x64` and `win-x64`, writes `SHA256SUMS.txt` and opens a **draft**
+   release. A manual run creates the tag only when you publish the draft.
+5. Review the assets and the generated notes, then publish.
+
+To withdraw a release that was published by mistake, delete it and the tag, then re-run the
+workflow with the corrected version.
+
 ## Code
 
 - `nullable` is on; do not suppress warnings without a comment.
