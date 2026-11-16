@@ -13,6 +13,19 @@ the game process only after you press START. The patch engine never touches the 
 > backup are implemented, with a shipped PoE1 patch set. FLIP (read-only market screener) and
 > AUTOMATION (PoE1 auto-flask) are optional tabs.
 
+## Download
+
+Self-contained builds are attached to the [latest release](https://github.com/Mo3ses/hollowwork/releases/latest).
+No .NET install needed.
+
+| Platform | File | Run |
+|---|---|---|
+| Linux x64 | `Hollowwork-<version>-linux-x64.tar.gz` | `tar -xzf Hollowwork-*.tar.gz && ./Hollowwork` |
+| Windows x64 | `Hollowwork-<version>-win-x64.zip` | unzip and start `Hollowwork.exe` |
+
+Bundles2 archives need an Oodle library that you provide yourself (`docs/OODLE.md`); GGPK archives
+work without it. Check the download against `SHA256SUMS.txt` from the same release.
+
 ## Why
 
 Modding client assets should be reversible and boring:
