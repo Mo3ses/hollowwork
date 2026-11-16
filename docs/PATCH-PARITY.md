@@ -33,12 +33,51 @@ difference.
 | **No loading screen** | `metadata/ui/loadingstate`, `.ui` | Insert `visible=false` / `mouse_enabled=false` after `begin Frame`, `Picture`, `Label` | loading-state patch | Same root; inserts `visible = false;` and `mouse_enabled = false;` into loading UI text | yes | near | observed | Same intent; anchor coverage may differ |
 | **Minimap colors** | `shaders/*.hlsl` | Three `replaceRegex` for `walkable_color`, `walkability_map_color`, unexplored lerp; colors `{explored}`, `{edge}`, `{unexplored}` | `Minimap` | Explicit `shaders/minimap_visibility_pixel.hlsl` and `minimap_blending_pixel.hlsl`; same regex family; color settings plus reveal threshold | partial | near | observed | Ours scans every shader; theirs targets two files and exposes more settings |
 | **Map revealed** | `shaders/*.hlsl` | Replace the exact red `res_color` line and add `res_color = max(res_color, 1.0);` | `Minimap` (reveal part) | `res_color = max(res_color, threshold);` on the minimap visibility shader | partial | near | observed | Ours is a separate patch, hardcoded to 1.0, and scans every shader |
-| **Clean terrain** | `metadata/terrain/doodads`, `.ao`; four excludes | 8 `stripBlock` operations | terrain cleaner | `.ao` + `.aoc`; roots `metadata/effects/misc`, `metadata/terrain`, `metadata/terrain/doodads`; curated block list | partial | subset | observed / unknown blocks | Ours is narrower on roots and extensions; the reference block list is larger |
-| **Delirium off** | `metadata/effects/environment/league_affliction`, `metadata/miscellaneousobjects/affliction`, `.ao` | 8 `stripBlock` operations | delirium patch | Same two roots; `.ao` + `.aoc`; curated block list | partial | subset | observed / unknown blocks | Missing `.aoc`; block list may differ |
+| **Clean terrain** | `metadata/terrain/doodads`, `.ao`; four excludes | 8 `stripBlock` operations | terrain cleaner | `.ao` + `.aoc`; roots `metadata/effects/misc`, `metadata/terrain`, `metadata/terrain/doodads`; curated block list | partial | subset | observed / unknown blocks | Ours is narrower on roots; the reference block list is larger |
+| **Delirium off** | `metadata/effects/environment/league_affliction`, `metadata/miscellaneousobjects/affliction`, `.ao` | 8 `stripBlock` operations | delirium patch | Same two roots; `.ao` + `.aoc`; curated block list | partial | subset | observed / unknown blocks | `.aoc` adds nothing in this build; block list may differ |
 | **Remove MTX** | `metadata/effects/microtransactions`, `.ao` | 7 `stripBlock` operations | MTX remover | 21 roots, including items/armours/quivers/weapons and many microtransaction subfolders; `.ao` + `.aoc` | partial | subset | observed / unknown blocks | Ours only touches the microtransactions root; theirs is much broader |
 | **Particles off** | `metadata/particles/enviro_effects`, `metadata/effects/environment`, `.pet` | `setText "0"` | particle patch | `.pet` + `.trl`; roots `metadata/effects/environment`, `metadata/particles`, Delirium/spirit/tormented paths; large keep/zero lists | partial | subset / different | observed / unknown lists | Ours is a blanket empty stub on two roots; theirs has curated exclusions |
 | **Fog off** | `metadata/environmentsettings`, `.env` | Replace the quoted `"fog"` key with `"xog"` | env patch (`Fog`) | Same `.env` root; observed replace map `"audio"` → `"xaudio"` with a `"audio"` pre-check | partial | different | observed / intent unclear | The decompiled class does not show a `"fog"` replacement; verify against a real `.env` before changing ours |
 | **PoE2 patch set** | none | none | several PoE2 classes | Clean terrain, delirium, MTX, black screen, and others | no | — | observed | Largest coverage gap |
+
+## Measured reach
+
+Counts taken from the local Steam `Bundles2` install by running the Hollowwork planner targets and
+the reference roots and extensions against the same index. **Files walked**, not files modified:
+both implementations decide per file whether an operation applies.
+
+| Patch | Hollowwork files | Reference files (roots) | Ratio | Reading |
+|---|---:|---:|---|---|
+| Camera zoom | **8** | **100 curated paths** | ~12× | Ours only sees `metadata/characters`. `metadata/miscellaneousobjects/camerazoom` alone holds 17 `.ot` camera nodes we never touch |
+| Shadows off | 1,466 | 1,466 | 1× | Same root, same extension; parity |
+| Fog off | 1,466 | 1,466 | 1× | Same root; the operation differs, not the reach |
+| No loading screen | **3** | **3** | 1× | Exact file-set parity |
+| Minimap colors | **127** | **2** | 63× | Ours scans every shader; two files are relevant |
+| Map revealed | **127** | **2** | 63× | Same: a single `res_color` line in one shader |
+| Clean terrain | 13,091 | 17,186 | 1.3× | Missing `metadata/effects/misc` and `metadata/terrain` outside doodads |
+| Delirium off | 21 | 21 | 1× | Equal; the `.aoc` difference is inert (see below) |
+| Remove MTX | 7,711 | 22,626 | 2.9× | 14,917 of the extra files are `metadata/items/armours` (17,188) and `metadata/items/weapons` (2,721) |
+| Particles off | 2,087 | 20,294 | 9.7× | The reference also walks `metadata/particles/monster_effects` (13,012) and `metadata/particles/masters` |
+
+### Correction: `.aoc` is inert
+
+Earlier rows list `.aoc` as a missing extension. The current build has **zero `.aoc` files** under
+`metadata/terrain/doodads`, `metadata/effects/microtransactions` and
+`metadata/miscellaneousobjects/affliction`. Adding `.aoc` to our targets changes nothing today; it
+only costs a second directory pass. Keep it out unless a future build ships those files.
+
+### What the numbers change
+
+- **Minimap and map reveal are the clearest defects.** Walking 127 shaders to edit two is 125 wasted
+  reads per run, and it makes the dry-run preview unreadable.
+- **Camera is a coverage bug, not a tuning issue.** Eight files against a 100-path curated list
+  means most camera nodes — boss arenas, league mechanics, zoom triggers — stay vanilla.
+- **Remove MTX should not simply copy the broader roots.** Two thirds of the reference reach is
+  item art. Widening without exclusions would strip blocks from every armour and weapon model.
+  The honest move is to add the microtransaction subfolders and leave `metadata/items` alone.
+- **Particles can grow, but deliberately.** `metadata/particles/monster_effects` is 13k files; a
+  blanket walk there is a real performance and correctness risk. Add roots one at a time and diff
+  before and after.
 
 ## Reference patches not represented in Hollowwork
 
@@ -73,8 +112,9 @@ Some are variants or helpers; the list is a coverage map, not a promise that eac
 
 **P0 — correctness before breadth**
 
-1. **Run a file-set diff** on the real Bundles2 index: Hollowwork planner against the reference
-   path lists, per patch. This settles the `partial` rows.
+1. **Finish the file-set diff**: the Hollowwork side is measured (see *Measured reach*); the
+   remaining step is a per-file comparison of which files each side actually modifies, not just
+   walks.
 2. **Camera audit**: compare our `metadata/characters` root against the curated `.ot` list; add the
    missing camera nodes or narrow the target.
 3. **Minimap / map reveal**: restrict to the two minimap shaders and parameterize the reveal
@@ -84,9 +124,9 @@ Some are variants or helpers; the list is a coverage map, not a promise that eac
 
 **P1 — close the PoE1 coverage gap**
 
-5. Clean terrain: add `.aoc`, `metadata/effects/misc`, `metadata/terrain`, and align the block and
+5. Clean terrain: add `metadata/effects/misc` and `metadata/terrain`, and align the block and
    exclusion lists.
-6. Delirium: add `.aoc` and align the block list.
+6. Delirium: align the block list; no target change is needed.
 7. Remove MTX: expand roots carefully; avoid stripping legitimate item art.
 8. Particles: add `.trl` and the missing roots, keeping chest, stash and crafting exclusions.
 9. No loading: compare the insertion anchors so both hide the same widgets.
