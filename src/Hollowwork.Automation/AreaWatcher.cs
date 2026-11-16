@@ -201,6 +201,9 @@ public sealed class AreaWatcher : IAreaProbe, IDisposable
 
         foreach (var library in SteamLibraries(home))
         {
+            // The client writes its log next to the game files, inside the install directory.
+            yield return Path.Combine(library, "steamapps", "common", "Path of Exile", "logs", "Client.txt");
+
             var users = Path.Combine(library, "steamapps", "compatdata", "238960", "pfx", suffix);
             if (!Directory.Exists(users))
             {
