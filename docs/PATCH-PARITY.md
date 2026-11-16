@@ -28,7 +28,7 @@ difference.
 
 | Patch | Hollowwork target | Hollowwork operation | Reference component | Reference target / operation | Same files? | Same edit? | Confidence | Notes |
 |---|---|---|---|---|---|---|---|---|
-| **Camera zoom** | `metadata/characters`, `.ot` | `replaceRegex` on `CreateCameraZoomNode(5000.0, 5000.0, ...)` with `{zoom}`; inject a `team = 1` hook | `Camera` | Curated `.ot` list (includes `character.ot` and many camera/zoom nodes); same engine strings; zoom level parameter | partial | near | observed | Ours is root-wide and misses the many camera nodes outside `metadata/characters`; theirs is path-list based |
+| **Camera zoom** | `metadata/characters/character.ot` | `replaceRegex` on the single `CreateCameraZoomNode(5000.0, 5000.0, ...)` node; `team = 1` fallback guarded by `unless` | `Camera` | Curated `.ot` list covering the player node and 38 scripted camera objects; zoom level parameter | partial | different | observed | Ours changes the player's zoom only. The other 38 node-bearing files are boss intros, arenas and league set pieces; rewriting their zoom is a separate feature |
 | **Shadows off** | `metadata/environmentsettings`, `.env` | `setBool shadows_enabled=false` | `Shadow` (env base class) | Same `.env` root; replace `"shadows_enabled": true` with `false` | yes | same | observed | Closest match in the set |
 | **No loading screen** | `metadata/ui/loadingstate`, `.ui` | Insert `visible=false` / `mouse_enabled=false` after `begin Frame`, `Picture`, `Label` | loading-state patch | Same root; inserts `visible = false;` and `mouse_enabled = false;` into loading UI text | yes | near | observed | Same intent; anchor coverage may differ |
 | **Minimap colors** | `shaders/*.hlsl` | Three `replaceRegex` for `walkable_color`, `walkability_map_color`, unexplored lerp; colors `{explored}`, `{edge}`, `{unexplored}` | `Minimap` | Explicit `shaders/minimap_visibility_pixel.hlsl` and `minimap_blending_pixel.hlsl`; same regex family; color settings plus reveal threshold | partial | near | observed | Ours scans every shader; theirs targets two files and exposes more settings |
@@ -48,7 +48,7 @@ both implementations decide per file whether an operation applies.
 
 | Patch | Hollowwork files | Reference files (roots) | Ratio | Reading |
 |---|---:|---:|---|---|
-| Camera zoom | **8** | **100 curated paths** | ~12× | Ours only sees `metadata/characters`. `metadata/miscellaneousobjects/camerazoom` alone holds 17 `.ot` camera nodes we never touch |
+| Camera zoom | **1** (of 39 node-bearing files) | **39 node-bearing files** out of 100 curated paths | 39× | Full scan of 13,304 `.ot` files under `metadata`: 39 contain `CreateCameraZoomNode`, ours edits the player one. The rest are scripted cinematics |
 | Shadows off | 1,466 | 1,466 | 1× | Same root, same extension; parity |
 | Fog off | 1,466 | 1,466 | 1× | Same root; the operation differs, not the reach |
 | No loading screen | **3** | **3** | 1× | Exact file-set parity |
@@ -70,8 +70,11 @@ only costs a second directory pass. Keep it out unless a future build ships thos
 
 - **Minimap and map reveal are the clearest defects.** Walking 127 shaders to edit two is 125 wasted
   reads per run, and it makes the dry-run preview unreadable.
-- **Camera is a coverage bug, not a tuning issue.** Eight files against a 100-path curated list
-  means most camera nodes — boss arenas, league mechanics, zoom triggers — stay vanilla.
+- **Camera is not a coverage bug — it is a narrower feature.** A full scan of the `.ot` corpus finds
+  39 files with a `CreateCameraZoomNode`, and only one is the player camera. The other 38 are boss
+  intros, arena framing and league set pieces. Pinning those to a fixed zoom is a different mod
+  with a different failure mode: it removes the camera work the encounter was authored around.
+  Decide it on purpose, as its own patch, not by widening this one.
 - **Remove MTX should not simply copy the broader roots.** Two thirds of the reference reach is
   item art. Widening without exclusions would strip blocks from every armour and weapon model.
   The honest move is to add the microtransaction subfolders and leave `metadata/items` alone.
@@ -115,8 +118,8 @@ Some are variants or helpers; the list is a coverage map, not a promise that eac
 1. **Finish the file-set diff**: the Hollowwork side is measured (see *Measured reach*); the
    remaining step is a per-file comparison of which files each side actually modifies, not just
    walks.
-2. **Camera audit**: compare our `metadata/characters` root against the curated `.ot` list; add the
-   missing camera nodes or narrow the target.
+2. **Camera audit — done.** 39 `.ot` files contain `CreateCameraZoomNode`; ours edits the player
+   node and nothing else. Keep that scope. Scripted-camera zoom is a separate, opt-in patch.
 3. **Minimap / map reveal**: restrict to the two minimap shaders and parameterize the reveal
    threshold; stop scanning every `shaders/*.hlsl` for a single line.
 4. **Fog decision**: validate the quoted `"fog"` key against the real `.env` and document why it
