@@ -8,6 +8,7 @@ namespace Hollowwork.App.Views;
 public partial class CompactWindow : Window
 {
     private readonly MainWindowViewModel _viewModel = new();
+    private LiveWindow? _liveWindow;
 
     public CompactWindow() : this(null)
     {
@@ -56,6 +57,19 @@ public partial class CompactWindow : Window
         {
             await _viewModel.OpenAsync(folder);
         }
+    }
+
+    private void OnLiveClicked(object? sender, RoutedEventArgs e)
+    {
+        if (_liveWindow is { IsVisible: true })
+        {
+            _liveWindow.Activate();
+            return;
+        }
+
+        _liveWindow = new LiveWindow();
+        _liveWindow.Closed += (_, _) => _liveWindow = null;
+        _liveWindow.Show(this);
     }
 
     private async void OnBackupClicked(object? sender, RoutedEventArgs e)

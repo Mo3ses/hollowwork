@@ -39,6 +39,27 @@ Modding client assets should be reversible and boring:
 Planned after v1: minimap colours, camera tweaks, MTX preview.
 Automation of gameplay, order placement and trade bots are **out of scope** for this project.
 
+## Live automation (PoE1, Linux)
+
+`LIVE` opens a separate module that reads HP/ES/MP directly from the PoE1
+process and can press the configured flask keys while the game window is
+focused. It is deliberately separate from the patch engine and does not use
+AutoHotkey.
+
+Requirements:
+
+- Path of Exile 1 running through Steam/Proton on X11 or XWayland.
+- The Hollowwork process must be able to read the game process
+  (`process_vm_readv`); run it as the same user that owns the game process.
+- `DISPLAY` must point at the session running the game.
+
+The offset profile is `automation/poe1.json`. It contains the pattern, pointer
+chain and Life component offsets for the current build. After a game patch,
+update the JSON; the reader validates the chain before it starts.
+
+Automation is gameplay automation and violates the game's terms; account
+restrictions are possible. The module never runs until you press **START**.
+
 ## Currency FLIP
 
 Open the **FLIP** tab, pick a league and press **REFRESH**. The app reads the public

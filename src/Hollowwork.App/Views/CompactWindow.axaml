@@ -57,6 +57,7 @@
                     <TextBlock Classes="brand" Text="HOLLOWWORK" />
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                    <Button Classes="ghost" Content="LIVE" Click="OnLiveClicked" />
                     <Button Classes="ghost" Content="BACKUP" Click="OnBackupClicked" />
                     <Button Classes="primary" Content="OPEN" Click="OnOpenClicked" />
                 </StackPanel>

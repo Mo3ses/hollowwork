@@ -1,0 +1,26 @@
+{
+  "game": "poe1",
+  "processName": "PathOfExileSteam.exe",
+  "windowTitle": "Path of Exile",
+  "windowClass": "steam_app_238960",
+  "gameRootPattern": "48 8B F1 33 ED 48 39 2D",
+  "gameRootPointerOffset": 12,
+  "gameRootAdjust": 8,
+  "inGameStateOffset": 136,
+  "dataOffset": 536,
+  "playerOffset": 2432,
+  "entity": {
+    "detailsOffset": 8,
+    "componentsOffset": 16,
+    "lookupOffset": 40,
+    "componentMapOffset": 40
+  },
+  "life": {
+    "curHp": 424,
+    "maxHp": 420,
+    "curMp": 504,
+    "maxMp": 500,
+    "curEs": 576,
+    "maxEs": 572
+  }
+}
