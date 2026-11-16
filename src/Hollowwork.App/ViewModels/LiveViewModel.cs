@@ -11,6 +11,7 @@ public sealed class LiveViewModel : INotifyPropertyChanged, IDisposable
     private readonly AutomationProfile? _profile;
     private readonly string _profileError;
     private AutoFlaskEngine? _engine;
+    private AreaWatcher? _area;
     private bool _hpEnabled = true;
     private bool _esEnabled;
     private bool _mpEnabled = true;
@@ -22,6 +23,10 @@ public sealed class LiveViewModel : INotifyPropertyChanged, IDisposable
     private string _mpKey = "2";
     private string _cooldownText = "1000";
     private bool _requireFocus = true;
+    private bool _pauseInTown = true;
+    private bool _pauseInHideout = true;
+    private string _clientLogPath = string.Empty;
+    private string _areaText = "AREA · not watched";
     private string _statusText = "STOPPED";
     private string _lastAction = "Select START to attach to PoE1.";
     private string _hpText = "HP —";
@@ -117,6 +122,31 @@ public sealed class LiveViewModel : INotifyPropertyChanged, IDisposable
         set => Set(ref _requireFocus, value);
     }
 
+    public bool PauseInTown
+    {
+        get => _pauseInTown;
+        set => Set(ref _pauseInTown, value);
+    }
+
+    public bool PauseInHideout
+    {
+        get => _pauseInHideout;
+        set => Set(ref _pauseInHideout, value);
+    }
+
+    /// <summary>Full path to <c>Client.txt</c>; empty means auto-discovery.</summary>
+    public string ClientLogPath
+    {
+        get => _clientLogPath;
+        set => Set(ref _clientLogPath, value);
+    }
+
+    public string AreaText
+    {
+        get => _areaText;
+        private set => Set(ref _areaText, value);
+    }
+
     public string StatusText
     {
         get => _statusText;
@@ -209,7 +239,9 @@ public sealed class LiveViewModel : INotifyPropertyChanged, IDisposable
         {
             var input = new X11KeySink();
             var focus = new X11FocusProbe();
-            _engine = new AutoFlaskEngine(reader!, input, focus, _profile);
+            _area = new AreaWatcher(string.IsNullOrWhiteSpace(ClientLogPath) ? null : ClientLogPath.Trim());
+            _area.Poll();
+            _engine = new AutoFlaskEngine(reader!, input, focus, _profile, _area);
             _engine.Start(Options());
             IsRunning = true;
             StatusText = $"RUNNING · PID {_engine.ProcessId}";
@@ -239,7 +271,10 @@ public sealed class LiveViewModel : INotifyPropertyChanged, IDisposable
         _engine?.Stop();
         _engine?.Dispose();
         _engine = null;
+        _area?.Dispose();
+        _area = null;
         IsRunning = false;
+        AreaText = "AREA · not watched";
         StatusText = "STOPPED";
         LastAction = "No keys are being sent.";
     }
@@ -249,6 +284,8 @@ public sealed class LiveViewModel : INotifyPropertyChanged, IDisposable
         _timer.Stop();
         _engine?.Dispose();
         _engine = null;
+        _area?.Dispose();
+        _area = null;
     }
 
     private AutoFlaskOptions Options()
@@ -265,7 +302,9 @@ public sealed class LiveViewModel : INotifyPropertyChanged, IDisposable
             EsKey,
             MpKey,
             cooldown,
-            RequireFocus);
+            RequireFocus,
+            PauseInTown,
+            PauseInHideout);
     }
 
     private void Refresh()
@@ -276,6 +315,13 @@ public sealed class LiveViewModel : INotifyPropertyChanged, IDisposable
         }
 
         StatusText = _engine.StatusText;
+        AreaText = _area switch
+        {
+            { IsAvailable: true } => $"AREA · {_engine.AreaLabel ?? "—"}",
+            { Error: { } error } => $"AREA OFF · {error}",
+            _ => "AREA · not watched",
+        };
+
         var action = _engine.LastAction;
         if (!string.IsNullOrWhiteSpace(action))
         {

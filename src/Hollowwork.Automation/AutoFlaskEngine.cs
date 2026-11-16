@@ -11,7 +11,9 @@ public sealed record AutoFlaskOptions(
     string EsKey = "3",
     string MpKey = "2",
     int CooldownMs = 1000,
-    bool RequireFocus = true);
+    bool RequireFocus = true,
+    bool PauseInTown = true,
+    bool PauseInHideout = true);
 
 public sealed class AutoFlaskEngine : IDisposable
 {
@@ -19,6 +21,7 @@ public sealed class AutoFlaskEngine : IDisposable
     private readonly IKeySink _input;
     private readonly IFocusProbe _focus;
     private readonly AutomationProfile _profile;
+    private readonly IAreaProbe? _area;
     private CancellationTokenSource? _cts;
     private Task? _loop;
     private AutoFlaskOptions _options = new();
@@ -34,13 +37,20 @@ public sealed class AutoFlaskEngine : IDisposable
         Poe1Reader reader,
         IKeySink input,
         IFocusProbe focus,
-        AutomationProfile profile)
+        AutomationProfile profile,
+        IAreaProbe? area = null)
     {
         _reader = reader;
         _input = input;
         _focus = focus;
         _profile = profile;
+        _area = area;
     }
+
+    /// <summary>Zone the automation is paused in, when it is paused by area.</summary>
+    public string? AreaLabel => _area is { IsAvailable: true } area
+        ? area.IsTransitioning ? "LOADING" : area.Area
+        : null;
 
     public int ProcessId => _reader.ProcessId;
 
@@ -78,6 +88,21 @@ public sealed class AutoFlaskEngine : IDisposable
         _cts?.Cancel();
         _running = false;
         SetStatus("STOPPED");
+    }
+
+    private bool ShouldPause(IAreaProbe area)
+    {
+        if (area.IsTransitioning)
+        {
+            return true;
+        }
+
+        return area.Kind switch
+        {
+            AreaKind.Town => _options.PauseInTown,
+            AreaKind.Hideout => _options.PauseInHideout,
+            _ => false,
+        };
     }
 
     public static bool ShouldPress(
@@ -147,6 +172,14 @@ public sealed class AutoFlaskEngine : IDisposable
                 if (_options.RequireFocus && !_focus.IsGameFocused(_profile.WindowTitle, _profile.WindowClass))
                 {
                     SetStatus("RUNNING · GAME NOT FOCUSED");
+                    await Task.Delay(250, cancellationToken);
+                    continue;
+                }
+
+                _area?.Poll();
+                if (_area is { IsAvailable: true } area && ShouldPause(area))
+                {
+                    SetStatus(area.IsTransitioning ? "PAUSED · LOADING" : $"PAUSED · {area.Kind.ToString().ToUpperInvariant()} · {area.Area}");
                     await Task.Delay(250, cancellationToken);
                     continue;
                 }

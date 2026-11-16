@@ -166,4 +166,90 @@ public class AutomationTests
         {
         }
     }
+
+    [Theory]
+    [InlineData("2026/11/16 09:31:22 123456789 abc [INFO Client 123] : You have entered Celestial Hideout.", "Celestial Hideout")]
+    [InlineData("2026/11/16 09:31:22 1 a [INFO Client 1] : You have entered The Sarn Encampment.", "The Sarn Encampment")]
+    public void Parses_the_area_from_a_log_line(string line, string expected)
+    {
+        Assert.Equal(expected, AreaWatcher.ParseArea(line));
+    }
+
+    [Theory]
+    [InlineData("2026/11/16 09:31:22 1 a [INFO Client 1] : Connecting to instance server at 127.0.0.1:6112.")]
+    [InlineData("2026/11/16 09:31:22 1 a [INFO Client 1] : AFK mode is now ON.")]
+    public void Ignores_lines_that_are_not_an_area_entry(string line)
+    {
+        Assert.Null(AreaWatcher.ParseArea(line));
+    }
+
+    [Theory]
+    [InlineData("Celestial Hideout", AreaKind.Hideout)]
+    [InlineData("Lioneye's Watch", AreaKind.Town)]
+    [InlineData("The Rogue Harbour", AreaKind.Town)]
+    [InlineData("Cemetery Map", AreaKind.Map)]
+    [InlineData(null, AreaKind.Unknown)]
+    public void Classifies_areas(string? area, AreaKind expected)
+    {
+        Assert.Equal(expected, AreaWatcher.Classify(area));
+    }
+
+    [Fact]
+    public void Follows_zone_changes_in_the_log()
+    {
+        var path = Path.GetTempFileName();
+        try
+        {
+            using var watcher = new AreaWatcher(path);
+            watcher.Poll();
+            Assert.True(watcher.IsAvailable);
+            Assert.Null(watcher.Area);
+
+            File.AppendAllText(path, "[INFO Client 1] : You have entered Cemetery Map.\n");
+            watcher.Poll();
+
+            Assert.Equal("Cemetery Map", watcher.Area);
+            Assert.Equal(AreaKind.Map, watcher.Kind);
+            Assert.False(watcher.IsTransitioning);
+
+            File.AppendAllText(path, "[INFO Client 1] : Connecting to instance server at 127.0.0.1:6112.\n");
+            watcher.Poll();
+            Assert.True(watcher.IsTransitioning);
+
+            File.AppendAllText(path, "[INFO Client 1] : You have entered Celestial Hideout.\n");
+            watcher.Poll();
+            Assert.False(watcher.IsTransitioning);
+            Assert.Equal(AreaKind.Hideout, watcher.Kind);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void Restarts_cleanly_when_the_log_is_truncated()
+    {
+        var path = Path.GetTempFileName();
+        try
+        {
+            using var watcher = new AreaWatcher(path);
+            watcher.Poll();
+
+            File.AppendAllText(path, "[INFO Client 1] : You have entered Cemetery Map.\n");
+            watcher.Poll();
+            Assert.Equal("Cemetery Map", watcher.Area);
+
+            // The game restarts and starts a fresh log.
+            File.WriteAllText(path, "[INFO Client 1] : You have entered The Sarn Encampment.\n");
+            watcher.Poll();
+
+            Assert.Equal("The Sarn Encampment", watcher.Area);
+            Assert.Equal(AreaKind.Town, watcher.Kind);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
 }

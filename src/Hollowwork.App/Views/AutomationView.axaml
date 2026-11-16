@@ -96,6 +96,20 @@
             <CheckBox Content="Only send keys while the game is focused"
                       IsChecked="{Binding RequireFocus}" />
 
+            <Border Classes="rule" />
+
+            <StackPanel Spacing="6">
+                <TextBlock Classes="eyebrow" Text="AREA PAUSE" />
+                <CheckBox Content="Pause in town" IsChecked="{Binding PauseInTown}" />
+                <CheckBox Content="Pause in hideout" IsChecked="{Binding PauseInHideout}" />
+                <TextBox Text="{Binding ClientLogPath}" MaxLength="512"
+                         PlaceholderText="Client.txt path (auto-detected when empty)" />
+                <TextBlock Classes="mono faint" FontSize="9" TextWrapping="Wrap"
+                           Text="{Binding AreaText}" />
+                <TextBlock Classes="mono faint" FontSize="9" TextWrapping="Wrap"
+                           Text="Follows the game log. If the log cannot be found, keys keep working exactly as before." />
+            </StackPanel>
+
             <TextBlock Classes="mono faint" FontSize="9" TextWrapping="Wrap"
                        Text="Reads HP/ES/MP from the PoE1 process and sends the configured flask keys through X11. No AutoHotkey. Stop before changing characters or areas." />
 
