@@ -132,6 +132,7 @@ docs/
 ```
 
 Format reference: `docs/PATCH-FORMAT.md`.
+Parity matrix against ExileForge: `docs/PATCH-PARITY.md`.
 
 ## Safety
 
