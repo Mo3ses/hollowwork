@@ -89,6 +89,9 @@ public partial class CompactWindow : Window
     private async void OnFlipRefreshClicked(object? sender, RoutedEventArgs e) =>
         await _viewModel.Flip.RefreshAsync();
 
+    private void OnAutomationTabClicked(object? sender, RoutedEventArgs e) =>
+        _viewModel.SelectAutomationTab();
+
     private void OnLiquidStrategyClicked(object? sender, RoutedEventArgs e) =>
         _viewModel.Flip.SetStrategy("liquid");
 

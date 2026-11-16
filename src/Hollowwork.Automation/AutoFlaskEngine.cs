@@ -1,0 +1,200 @@
+namespace Hollowwork.Automation;
+
+public sealed record AutoFlaskOptions(
+    bool HpEnabled = true,
+    double HpThreshold = 0.40,
+    bool EsEnabled = false,
+    double EsThreshold = 0.50,
+    bool MpEnabled = true,
+    double MpThreshold = 0.30,
+    string HpKey = "1",
+    string EsKey = "3",
+    string MpKey = "2",
+    int CooldownMs = 1000,
+    bool RequireFocus = true);
+
+public sealed class AutoFlaskEngine : IDisposable
+{
+    private readonly Poe1Reader _reader;
+    private readonly IKeySink _input;
+    private readonly IFocusProbe _focus;
+    private readonly AutomationProfile _profile;
+    private CancellationTokenSource? _cts;
+    private Task? _loop;
+    private AutoFlaskOptions _options = new();
+    private DateTime _lastHpPress = DateTime.MinValue;
+    private DateTime _lastEsPress = DateTime.MinValue;
+    private DateTime _lastMpPress = DateTime.MinValue;
+    private PlayerVitals? _vitals;
+    private string _status = "STOPPED";
+    private string _lastAction = string.Empty;
+    private volatile bool _running;
+
+    public AutoFlaskEngine(
+        Poe1Reader reader,
+        IKeySink input,
+        IFocusProbe focus,
+        AutomationProfile profile)
+    {
+        _reader = reader;
+        _input = input;
+        _focus = focus;
+        _profile = profile;
+    }
+
+    public int ProcessId => _reader.ProcessId;
+
+    public bool IsAttached => _reader.IsAttached;
+
+    public bool IsRunning => _running;
+
+    public PlayerVitals? Vitals => _vitals;
+
+    public string StatusText => Volatile.Read(ref _status);
+
+    public string LastAction => Volatile.Read(ref _lastAction);
+
+    public void Start(AutoFlaskOptions options)
+    {
+        if (_running)
+        {
+            return;
+        }
+
+        _options = options;
+        _lastHpPress = _lastEsPress = _lastMpPress = DateTime.MinValue;
+        _cts = new CancellationTokenSource();
+        _running = true;
+        _loop = Task.Run(() => LoopAsync(_cts.Token));
+    }
+
+    public void Stop()
+    {
+        if (!_running)
+        {
+            return;
+        }
+
+        _cts?.Cancel();
+        _running = false;
+        SetStatus("STOPPED");
+    }
+
+    public static bool ShouldPress(
+        int current,
+        int max,
+        double threshold,
+        DateTime now,
+        DateTime lastPress,
+        int cooldownMs)
+    {
+        if (max <= 0 || current <= 0 || threshold <= 0 || threshold >= 1)
+        {
+            return false;
+        }
+
+        var ratio = (double)current / max;
+        return ratio < threshold &&
+               (now - lastPress).TotalMilliseconds >= Math.Max(0, cooldownMs);
+    }
+
+    public void Dispose()
+    {
+        Stop();
+        try
+        {
+            _loop?.Wait(TimeSpan.FromSeconds(2));
+        }
+        catch (AggregateException)
+        {
+        }
+
+        _cts?.Dispose();
+        _input.Dispose();
+        _focus.Dispose();
+        _reader.Dispose();
+    }
+
+    private async Task LoopAsync(CancellationToken cancellationToken)
+    {
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            try
+            {
+                var vitals = _reader.ReadVitals();
+                if (vitals is null)
+                {
+                    if (!_reader.TryAttach(out var error))
+                    {
+                        SetStatus($"ATTACH FAILED · {error}");
+                        await Task.Delay(1000, cancellationToken);
+                        continue;
+                    }
+
+                    vitals = _reader.ReadVitals();
+                }
+
+                if (vitals is not { IsSane: true } value)
+                {
+                    _vitals = null;
+                    SetStatus("WAITING FOR PLAYER");
+                    await Task.Delay(500, cancellationToken);
+                    continue;
+                }
+
+                _vitals = value;
+
+                if (_options.RequireFocus && !_focus.IsGameFocused(_profile.WindowTitle, _profile.WindowClass))
+                {
+                    SetStatus("RUNNING · GAME NOT FOCUSED");
+                    await Task.Delay(250, cancellationToken);
+                    continue;
+                }
+
+                var now = DateTime.UtcNow;
+                if (_options.HpEnabled &&
+                    ShouldPress(value.Hp, value.MaxHp, _options.HpThreshold, now, _lastHpPress, _options.CooldownMs) &&
+                    !string.IsNullOrWhiteSpace(_options.HpKey))
+                {
+                    _input.Press(_options.HpKey);
+                    _lastHpPress = now;
+                    SetAction($"HP FLASK · {value.Hp}/{value.MaxHp}");
+                }
+
+                if (_options.EsEnabled &&
+                    ShouldPress(value.Es, value.MaxEs, _options.EsThreshold, now, _lastEsPress, _options.CooldownMs) &&
+                    !string.IsNullOrWhiteSpace(_options.EsKey))
+                {
+                    _input.Press(_options.EsKey);
+                    _lastEsPress = now;
+                    SetAction($"ES FLASK · {value.Es}/{value.MaxEs}");
+                }
+
+                if (_options.MpEnabled &&
+                    ShouldPress(value.Mp, value.MaxMp, _options.MpThreshold, now, _lastMpPress, _options.CooldownMs) &&
+                    !string.IsNullOrWhiteSpace(_options.MpKey))
+                {
+                    _input.Press(_options.MpKey);
+                    _lastMpPress = now;
+                    SetAction($"MP FLASK · {value.Mp}/{value.MaxMp}");
+                }
+
+                SetStatus($"RUNNING · HP {value.Hp}/{value.MaxHp} · ES {value.Es}/{value.MaxEs} · MP {value.Mp}/{value.MaxMp}");
+                await Task.Delay(50, cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+            catch (Exception exception)
+            {
+                SetStatus($"ERROR · {exception.Message}");
+                await Task.Delay(1000, cancellationToken);
+            }
+        }
+    }
+
+    private void SetStatus(string status) => Volatile.Write(ref _status, status);
+
+    private void SetAction(string action) => Volatile.Write(ref _lastAction, action);
+}

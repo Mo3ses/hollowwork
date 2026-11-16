@@ -1,0 +1,105 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Hollowwork.App.ViewModels"
+             x:Class="Hollowwork.App.Views.AutomationView"
+             x:DataType="vm:LiveViewModel">
+
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="18,10,18,14" Spacing="12">
+
+            <StackPanel Spacing="3">
+                <TextBlock Classes="chronicle" Text="AUTOMATION" FontSize="22" />
+                <TextBlock Classes="mono faint" Text="POE 1 · LOCAL MEMORY" />
+            </StackPanel>
+
+            <Border Padding="10,8" Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource LineBrush}" BorderThickness="1">
+                <StackPanel Spacing="3">
+                    <TextBlock Classes="mono faint" Text="STATUS" />
+                    <TextBlock Text="{Binding StatusText}" TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+
+            <Border Padding="10,8" Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource LineSoftBrush}" BorderThickness="1">
+                <StackPanel Spacing="5">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Classes="mono" Text="HEALTH" />
+                        <TextBlock Grid.Column="1" Classes="mono faint" Text="{Binding HpText}" />
+                    </Grid>
+                    <ProgressBar Value="{Binding HpPercent}" Maximum="100" Height="5" />
+                </StackPanel>
+            </Border>
+
+            <Border Padding="10,8" Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource LineSoftBrush}" BorderThickness="1">
+                <StackPanel Spacing="5">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Classes="mono" Text="ENERGY SHIELD" />
+                        <TextBlock Grid.Column="1" Classes="mono faint" Text="{Binding EsText}" />
+                    </Grid>
+                    <ProgressBar Value="{Binding EsPercent}" Maximum="100" Height="5" />
+                </StackPanel>
+            </Border>
+
+            <Border Padding="10,8" Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource LineSoftBrush}" BorderThickness="1">
+                <StackPanel Spacing="5">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Classes="mono" Text="MANA" />
+                        <TextBlock Grid.Column="1" Classes="mono faint" Text="{Binding MpText}" />
+                    </Grid>
+                    <ProgressBar Value="{Binding MpPercent}" Maximum="100" Height="5" />
+                </StackPanel>
+            </Border>
+
+            <Button Classes="primary" Content="{Binding StartLabel}" Height="36"
+                    HorizontalAlignment="Stretch" Click="OnStartStopClicked" />
+
+            <Border Classes="rule" />
+
+            <StackPanel Spacing="7">
+                <TextBlock Classes="eyebrow" Text="FLASKS" />
+                <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto,Auto" RowSpacing="7">
+                    <CheckBox Grid.Row="0" Content="HP" IsChecked="{Binding HpEnabled}" />
+                    <Slider Grid.Row="0" Grid.Column="1" Minimum="1" Maximum="99"
+                            Value="{Binding HpThreshold}" Margin="8,0" />
+                    <TextBlock Grid.Row="0" Grid.Column="2" Classes="mono faint"
+                               Text="{Binding HpThreshold, StringFormat={}{0:0}%}" VerticalAlignment="Center" />
+
+                    <CheckBox Grid.Row="1" Content="ES" IsChecked="{Binding EsEnabled}" />
+                    <Slider Grid.Row="1" Grid.Column="1" Minimum="1" Maximum="99"
+                            Value="{Binding EsThreshold}" Margin="8,0" />
+                    <TextBlock Grid.Row="1" Grid.Column="2" Classes="mono faint"
+                               Text="{Binding EsThreshold, StringFormat={}{0:0}%}" VerticalAlignment="Center" />
+
+                    <CheckBox Grid.Row="2" Content="MP" IsChecked="{Binding MpEnabled}" />
+                    <Slider Grid.Row="2" Grid.Column="1" Minimum="1" Maximum="99"
+                            Value="{Binding MpThreshold}" Margin="8,0" />
+                    <TextBlock Grid.Row="2" Grid.Column="2" Classes="mono faint"
+                               Text="{Binding MpThreshold, StringFormat={}{0:0}%}" VerticalAlignment="Center" />
+                </Grid>
+            </StackPanel>
+
+            <Grid ColumnDefinitions="56,*,56,*" RowDefinitions="Auto,Auto" RowSpacing="7" ColumnSpacing="8">
+                <TextBlock Classes="mono faint" Text="HP KEY" VerticalAlignment="Center" />
+                <TextBox Grid.Column="1" Text="{Binding HpKey}" MaxLength="16" />
+                <TextBlock Grid.Column="2" Classes="mono faint" Text="MP KEY" VerticalAlignment="Center" />
+                <TextBox Grid.Column="3" Text="{Binding MpKey}" MaxLength="16" />
+
+                <TextBlock Grid.Row="1" Classes="mono faint" Text="ES KEY" VerticalAlignment="Center" />
+                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding EsKey}" MaxLength="16" />
+                <TextBlock Grid.Row="1" Grid.Column="2" Classes="mono faint" Text="COOLDOWN" VerticalAlignment="Center" />
+                <TextBox Grid.Row="1" Grid.Column="3" Text="{Binding CooldownText}" MaxLength="6" />
+            </Grid>
+
+            <CheckBox Content="Only send keys while the game is focused"
+                      IsChecked="{Binding RequireFocus}" />
+
+            <TextBlock Classes="mono faint" FontSize="9" TextWrapping="Wrap"
+                       Text="Reads HP/ES/MP from the PoE1 process and sends the configured flask keys through X11. No AutoHotkey. Stop before changing characters or areas." />
+
+            <TextBlock Classes="mono faint" Text="{Binding LastAction}" TextWrapping="Wrap" />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

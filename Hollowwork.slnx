@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/Hollowwork.App/Hollowwork.App.csproj" />
+    <Project Path="src/Hollowwork.Automation/Hollowwork.Automation.csproj" />
     <Project Path="src/Hollowwork.Core/Hollowwork.Core.csproj" />
     <Project Path="src/Hollowwork.Patches/Hollowwork.Patches.csproj" />
     <Project Path="src/Hollowwork.Smoke/Hollowwork.Smoke.csproj" />

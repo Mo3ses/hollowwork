@@ -18,6 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Hollowwork.Automation\Hollowwork.Automation.csproj" />
     <ProjectReference Include="..\Hollowwork.Core\Hollowwork.Core.csproj" />
     <ProjectReference Include="..\Hollowwork.Patches\Hollowwork.Patches.csproj" />
   </ItemGroup>
@@ -29,6 +30,9 @@
   <ItemGroup>
     <Content Include="..\..\patches\**\*.json"
              Link="patches\%(RecursiveDir)%(Filename)%(Extension)"
+             CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\automation\**\*.json"
+             Link="automation\%(RecursiveDir)%(Filename)%(Extension)"
              CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
