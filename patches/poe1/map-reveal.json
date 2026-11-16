@@ -1,16 +1,35 @@
 {
   "id": "poe1.map-reveal",
   "name": "Map revealed",
-  "description": "Forces minimap visibility to fully revealed.",
+  "description": "Raises the minimap visibility floor to the configured reveal level.",
   "game": "poe1",
+  "parameters": [
+    {
+      "key": "reveal",
+      "label": "Reveal",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 1.0
+    }
+  ],
   "targets": [
-    { "root": "shaders", "extensions": [".hlsl"] }
+    {
+      "root": "shaders",
+      "extensions": [
+        ".hlsl"
+      ],
+      "files": [
+        "shaders/minimap_visibility_pixel.hlsl"
+      ]
+    }
   ],
   "operations": [
     {
       "type": "replace",
       "from": "res_color = float4(1.0f, 0.0f, 0.0f, 1.0f);",
-      "to": "res_color = float4(1.0f, 0.0f, 0.0f, 1.0f);\r\n\tres_color = max(res_color, 1.0f);"
+      "to": "res_color = float4(1.0f, 0.0f, 0.0f, 1.0f);\r\n\tres_color = max(res_color, {reveal});",
+      "unless": "res_color = max(res_color, "
     }
   ]
 }

@@ -58,4 +58,72 @@ public class PatchLoaderTests
             Directory.Delete(dir, recursive: true);
         }
     }
+
+    [Fact]
+    public void Loads_explicit_file_allowlist()
+    {
+        var json = Valid.Replace(
+            "\"extensions\": [\".env\"]",
+            "\"extensions\": [\".env\"], \"files\": [\"metadata/environmentsettings/a.env\"]");
+
+        var patch = PatchLoader.Load(json);
+
+        var files = Assert.Single(patch.Targets).Files;
+        Assert.NotNull(files);
+        Assert.Equal(["metadata/environmentsettings/a.env"], files);
+    }
+
+    [Fact]
+    public void Rejects_blank_file_entry()
+    {
+        var json = Valid.Replace(
+            "\"extensions\": [\".env\"]",
+            "\"extensions\": [\".env\"], \"files\": [\"  \"]");
+
+        Assert.Throws<PatchValidationException>(() => PatchLoader.Load(json));
+    }
+
+    [Fact]
+    public void Rejects_empty_file_list()
+    {
+        var json = Valid.Replace(
+            "\"extensions\": [\".env\"]",
+            "\"extensions\": [\".env\"], \"files\": []");
+
+        Assert.Throws<PatchValidationException>(() => PatchLoader.Load(json));
+    }
+
+    [Fact]
+    public void Rejects_file_entry_outside_the_root()
+    {
+        var json = Valid.Replace(
+            "\"extensions\": [\".env\"]",
+            "\"extensions\": [\".env\"], \"files\": [\"../secrets.env\"]");
+
+        Assert.Throws<PatchValidationException>(() => PatchLoader.Load(json));
+    }
+
+    [Fact]
+    public void Shipped_patches_load_and_validate()
+    {
+        var directory = FindRepositoryPatches();
+
+        var patches = PatchLoader.LoadDirectory(directory);
+
+        Assert.NotEmpty(patches);
+        Assert.Contains(patches, patch => patch.Id == "poe1.minimap-colors");
+        Assert.Contains(patches, patch => patch.Id == "poe1.map-reveal");
+    }
+
+    private static string FindRepositoryPatches()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "Hollowwork.slnx")))
+        {
+            directory = directory.Parent;
+        }
+
+        Assert.NotNull(directory);
+        return Path.Combine(directory.FullName, "patches");
+    }
 }
