@@ -82,6 +82,35 @@ only costs a second directory pass. Keep it out unless a future build ships thos
   blanket walk there is a real performance and correctness risk. Add roots one at a time and diff
   before and after.
 
+## Performance patch — ported
+
+`patches/poe1/performance.json` ports the reference performance patch, scoped per shader with
+target-level operations. **15 files, 24 operations, 36 edits** measured against the current
+`Bundles2` index.
+
+| Area | Shader | Edit |
+|---|---|---|
+| Post-process | `postprocessuber.hlsl` | early returns in decay, Azmeri fog, ritual darkness, bloom, radial blur, loading screen, DoF |
+| Bloom | `bloomcutoff.hlsl` | cutoff multiplier forced to zero |
+| Blur | `blur.hlsl`, `depthawareblur.hlsl`, `gaussianblur.hlsl` | single-tap sampling, vertical pass reduced to one fetch |
+| Screen-space | `screenspaceshadows.hlsl`, `screenspacerays.hlsl`, `screenspaceambientocclusion.hlsl`, `screenspacetracer.hlsl` | whole pixel entry point replaced with a constant or single-sample body |
+| Depth of field | `depthoffield.hlsl` | constant layers, single DoF fetch |
+| Volumetrics | `volumetricfx.hlsl`, `include/volumetricfxcommon.hlsl` | simulation call disabled, density and emission zeroed |
+| Global illumination | `globalillumination.hlsl` | ambient struct and `ApplyGlobalIllumination` replaced with a constant |
+| UI | `draw2d.hlsl` | 13 `PShad_*` pixel shaders return transparent |
+| Terrain | `renderer/ground.ffx` | blend and ground-light returns shortcut |
+
+**Not ported — needs an engine capability**, not a new pattern:
+
+- `globalilluminationcascade.hlsl`: the reference splices a block and then inserts `#if 0` before
+  the remainder by character index and closes it with `#endif` at a computed offset. Our operations
+  are match/replace, with no index insert and no block wrapping.
+- SSGI core in `include/vssgi.hlsl`: same shape — block splice plus `#if 0` wrapper.
+- `HorizontalBlur` in `gaussianblur.hlsl`: the decompiled call reuses a variable from a previous
+  branch, so the replacement text cannot be recovered with confidence.
+- `DepthMinmax`, `BloomGather` and the cascade probe pattern no longer match this build; their
+  replacements are recorded but inert.
+
 ## Reference patches not represented in Hollowwork
 
 Not exhaustive; these are the components visible in the dump with no direct Hollowwork JSON

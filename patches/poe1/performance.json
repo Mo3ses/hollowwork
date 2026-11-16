@@ -1,0 +1,293 @@
+{
+  "id": "poe1.performance",
+  "name": "Performance",
+  "description": "Cuts post-processing, screen-space effects and lighting work in the client shaders.",
+  "game": "poe1",
+  "targets": [
+    {
+      "root": "shaders",
+      "extensions": [
+        ".hlsl"
+      ],
+      "files": [
+        "shaders/postprocessuber.hlsl"
+      ],
+      "operations": [
+        {
+          "type": "replaceRegex",
+          "from": "(float4\\s+ApplyDecay\\s*\\([^)]*\\)\\s*\\{)",
+          "to": "$1\r\n\tcolour.a = 1.0f;\r\n\treturn colour;"
+        },
+        {
+          "type": "replaceRegex",
+          "from": "(float4\\s+ApplyAzmeriFog\\s*\\([^)]*\\)\\s*\\{)",
+          "to": "$1\r\n\treturn colour;"
+        },
+        {
+          "type": "replaceRegex",
+          "from": "(float4\\s+ApplyRitualDarkness\\s*\\([^)]*\\)\\s*\\{)",
+          "to": "$1\r\n\treturn colour;"
+        },
+        {
+          "type": "replaceRegex",
+          "from": "(float4\\s+ApplyBloom\\s*\\([^)]*\\)\\s*\\{)",
+          "to": "$1\r\n\treturn colour;"
+        },
+        {
+          "type": "replaceRegex",
+          "from": "(float4\\s+ApplyRadialBlur\\s*\\([^)]*\\)\\s*\\{)",
+          "to": "$1\r\n\tcolour.a = 1.0f;\r\n\treturn colour;"
+        },
+        {
+          "type": "replaceRegex",
+          "from": "(float4\\s+ApplyEngineLoadingScreen\\s*\\([^)]*\\)\\s*\\{)",
+          "to": "$1\r\n\treturn color;"
+        },
+        {
+          "type": "replaceRegex",
+          "from": "(float4\\s+ApplyDoF\\s*\\([^)]*\\)\\s*\\{)",
+          "to": "$1\r\n\treturn colour;"
+        }
+      ]
+    },
+    {
+      "root": "shaders",
+      "extensions": [
+        ".hlsl"
+      ],
+      "files": [
+        "shaders/bloomcutoff.hlsl"
+      ],
+      "operations": [
+        {
+          "type": "replaceRegex",
+          "from": "float\\s+mult\\s*=\\s*max\\s*\\(\\s*0\\.0f\\s*,\\s*luminance\\s*-\\s*cutoff\\s*\\)\\s*\\*\\s*intensity\\s*;",
+          "to": "float mult = 0.0f;"
+        }
+      ]
+    },
+    {
+      "root": "shaders",
+      "extensions": [
+        ".hlsl"
+      ],
+      "files": [
+        "shaders/blur.hlsl"
+      ],
+      "operations": [
+        {
+          "type": "replaceRegex",
+          "from": "(float4\\s+ApplyBlur\\s*\\(\\s*PInput\\s+input\\s*\\)\\s*:\\s*PIXEL_RETURN_SEMANTIC\\s*\\{)[\\s\\S]*$",
+          "to": "$1\r\n\tfloat2 pixel_tex_size = 1.0f / float2(viewport_width, viewport_height);\r\n\tfloat2 tex_coord = input.screen_coord.xy * pixel_tex_size;\r\n\treturn SAMPLE_TEX2DLOD(data_sampler, SamplerPointClampNoBias, float4(tex_coord, 0.0f, mip_level));\r\n}"
+        }
+      ]
+    },
+    {
+      "root": "shaders",
+      "extensions": [
+        ".hlsl"
+      ],
+      "files": [
+        "shaders/depthawareblur.hlsl"
+      ],
+      "operations": [
+        {
+          "type": "replaceRegex",
+          "from": "(float4\\s+ApplyBlur\\s*\\(\\s*PInput\\s+input\\s*\\)\\s*:\\s*PIXEL_RETURN_SEMANTIC\\s*\\{)[\\s\\S]*$",
+          "to": "$1\r\n\tuint2 center_pixel = uint2(input.screen_coord.xy);\r\n\tfloat4 center_data_sample = data_mip_tex[center_pixel];\r\n\treturn center_data_sample;\r\n}"
+        }
+      ]
+    },
+    {
+      "root": "shaders",
+      "extensions": [
+        ".hlsl"
+      ],
+      "files": [
+        "shaders/gaussianblur.hlsl"
+      ],
+      "operations": [
+        {
+          "type": "replaceRegex",
+          "from": "(float4\\s+VerticalBlur\\s*\\(\\s*PInput\\s+input\\s*\\)\\s*:\\s*PIXEL_RETURN_SEMANTIC\\s*\\{)[\\s\\S]*$",
+          "to": "$1\r\n\treturn float4(SAMPLE_TEX2D(tex_sampler, SamplerPointClamp, input.texture_uv).rgb, 1.0f);\r\n}"
+        }
+      ]
+    },
+    {
+      "root": "shaders",
+      "extensions": [
+        ".hlsl"
+      ],
+      "files": [
+        "shaders/screenspaceshadows.hlsl"
+      ],
+      "operations": [
+        {
+          "type": "replaceRegex",
+          "from": "(OutPixel\\s+ComputeScreenspaceShadows\\s*\\(\\s*PInput\\s+input\\s*\\)\\s*\\{)[\\s\\S]*$",
+          "to": "$1\r\n\tfloat light_amount = 1.0f;\r\n\tOutPixel res;\r\n\tfloat4 channel_mask = GetChannelMask(target_channel);\r\n\tres.shadowmap_data = (1.0f - channel_mask) + channel_mask * light_amount;\r\n\treturn res;\r\n}"
+        }
+      ]
+    },
+    {
+      "root": "shaders",
+      "extensions": [
+        ".hlsl"
+      ],
+      "files": [
+        "shaders/screenspacerays.hlsl"
+      ],
+      "operations": [
+        {
+          "type": "replaceRegex",
+          "from": "(OutPixel\\s+ComputeScreenspaceRays\\s*\\(\\s*PInput\\s+input\\s*\\)\\s*\\{)[\\s\\S]*$",
+          "to": "$1\r\n\tOutPixel res;\r\n\tres.ray_hit_data = 0.0f;\r\n\treturn res;\r\n}"
+        }
+      ]
+    },
+    {
+      "root": "shaders",
+      "extensions": [
+        ".hlsl"
+      ],
+      "files": [
+        "shaders/screenspaceambientocclusion.hlsl"
+      ],
+      "operations": [
+        {
+          "type": "replaceRegex",
+          "from": "(float4\\s+ApplyAmbientOcclusion\\s*\\(\\s*PInput\\s+input\\s*\\)\\s*:\\s*PIXEL_RETURN_SEMANTIC\\s*\\{)[\\s\\S]*$",
+          "to": "$1\r\n\tfloat2 viewport_size = float2(viewport_width, viewport_height);\r\n\tfloat2 tex_coord = (input.screen_coord.xy) / viewport_size;\r\n\tfloat4 albedo_color = SAMPLE_TEX2D(color_sampler, SamplerLinearClamp, tex_coord);\r\n\tif (length(albedo_color.rgb - float3(0.0f, 0.0f, 0.0f)) < 1e-3f) return albedo_color;\r\n\tfloat3 ambient_light = float3(1.0f, 1.0f, 1.0f);\r\n\tfloat4 res_color = float4(ambient_light * albedo_color.rgb, albedo_color.a);\r\n\tif (SAMPLE_TEX2D(normal_sampler, SamplerLinearClamp, tex_coord).a < 0.5f) res_color += albedo_color * 0.5f;\r\n\treturn res_color;\r\n}"
+        }
+      ]
+    },
+    {
+      "root": "shaders",
+      "extensions": [
+        ".hlsl"
+      ],
+      "files": [
+        "shaders/screenspacetracer.hlsl"
+      ],
+      "operations": [
+        {
+          "type": "replaceRegex",
+          "from": "(float4\\s+BuildReflection\\s*\\(\\s*PInput\\s+input\\s*\\)\\s*:\\s*PIXEL_RETURN_SEMANTIC\\s*\\{)[\\s\\S]*$",
+          "to": "$1\r\n\t// GGPK_MOD_REFLECTION_DISABLED\r\n\r\n\tfloat2 viewport_size = float2(viewport_width, viewport_height);\r\n\tfloat2 tex_coord = input.screen_coord.xy / viewport_size;\r\n\treturn SAMPLE_TEX2D(framebuffer_sampler, SamplerLinearWrap, tex_coord);\r\n}"
+        }
+      ]
+    },
+    {
+      "root": "shaders",
+      "extensions": [
+        ".hlsl"
+      ],
+      "files": [
+        "shaders/depthoffield.hlsl"
+      ],
+      "operations": [
+        {
+          "type": "replaceRegex",
+          "from": "(LayersOut\\s+ComputeLayers\\s*\\([^)]*\\)\\s*\\{)",
+          "to": "$1\r\n\tLayersOut result;\r\n\tresult.out_near = float4(0.0f, 0.0f, 0.0f, 0.0f);\r\n\tresult.out_far = float4(0.0f, 0.0f, 0.0f, 0.0f);\r\n\treturn result;"
+        },
+        {
+          "type": "replaceRegex",
+          "from": "(float4\\s+DoFBlur\\s*\\([^)]*\\)\\s*:\\s*PIXEL_RETURN_SEMANTIC\\s*\\{)",
+          "to": "$1\r\n\treturn SAMPLE_TEX2DLOD(src_sampler, SamplerLinearClamp, float4(input.screen_coord.xy / float2(viewport_size), 0.0f, 0.0f));"
+        }
+      ]
+    },
+    {
+      "root": "shaders",
+      "extensions": [
+        ".hlsl"
+      ],
+      "files": [
+        "shaders/volumetricfx.hlsl"
+      ],
+      "operations": [
+        {
+          "type": "replaceRegex",
+          "from": "(void\\s+mainSimulate\\s*\\([^)]*\\)\\s*\\{[\\s\\S]*?)(FlowGridCells\\s*\\(\\s*grid_index\\s*\\)\\s*;)",
+          "to": "$1// FlowGridCells(grid_index);"
+        }
+      ]
+    },
+    {
+      "root": "shaders",
+      "extensions": [
+        ".hlsl"
+      ],
+      "files": [
+        "shaders/include/volumetricfxcommon.hlsl"
+      ],
+      "operations": [
+        {
+          "type": "replace",
+          "from": "res.viscosity = params2.y;\r\n\tres.density = params2.z;\r\n\treturn res;",
+          "to": "res.viscosity = params2.y;\r\n\tres.density = params2.z;\r\n\t// Volumetric FX Fully Disabled for Ultra FPS\r\n\tres.mass = 0.0f;\r\n\tres.density = 0.0f;\r\n\tres.emissive = (float3)0;\r\n\tres.light = (float3)0;\r\n\tres.scattering = 0.0f;\r\n\tres.absorption = 0.0f;\r\n\treturn res;"
+        },
+        {
+          "type": "replace",
+          "from": "res.viscosity = params2.y;\r\n\tres.density = params2.z;\r\n\t\r\n\tnext_index = data.next_index;\r\n\treturn res;",
+          "to": "res.viscosity = params2.y;\r\n\tres.density = params2.z;\r\n\t\r\n\tnext_index = data.next_index;\r\n\t// Volumetric FX Emit Fully Disabled\r\n\tres.mass = 0.0f;\r\n\tres.density = 0.0f;\r\n\tres.emissive = (float3)0;\r\n\tres.scattering = 0.0f;\r\n\treturn res;"
+        }
+      ]
+    },
+    {
+      "root": "shaders",
+      "extensions": [
+        ".hlsl"
+      ],
+      "files": [
+        "shaders/globalillumination.hlsl"
+      ],
+      "operations": [
+        {
+          "type": "replaceRegex",
+          "from": "(struct\\s+AmbientLight[\\s\\S]*)$",
+          "to": "struct OutPixel\r\n{\r\n\tfloat4 ambient_data : PIXEL_RETURN_SEMANTIC;\r\n};\r\n\r\nOutPixel ApplyGlobalIllumination( PInput input )\r\n{\r\n\t// Screen-Space GI & AO Fully Disabled\r\n\tOutPixel res;\r\n\tres.ambient_data = float4(0.0f, 0.0f, 0.0f, 1.0f);\r\n\treturn res;\r\n}"
+        }
+      ]
+    },
+    {
+      "root": "shaders",
+      "extensions": [
+        ".hlsl"
+      ],
+      "files": [
+        "shaders/draw2d.hlsl"
+      ],
+      "operations": [
+        {
+          "type": "replaceRegex",
+          "from": "(float4\\s+\\b(PShad_Shaper|PShad_Elder|PShad_Tentacles|PShad_Conqueror|PShad_ConquerorGlow|PShad_Basilisk|PShad_BasiliskGlow|PShad_Crusader|PShad_CrusaderGlow|PShad_Eyrie|PShad_EyrieGlow|PShad_Hellscaped|PShad_Prototype)\\b\\s*\\(\\s*const\\s+VS_OUTPUT\\s+input\\s*\\)\\s*:\\s*PIXEL_RETURN_SEMANTIC\\s*\\{)",
+          "to": "$1\r\n\t// UI Clean Optimization Applied\r\n\treturn float4(0.0f, 0.0f, 0.0f, 0.0f);\r\n"
+        }
+      ]
+    },
+    {
+      "root": "shaders",
+      "extensions": [
+        ".ffx"
+      ],
+      "files": [
+        "shaders/renderer/ground.ffx"
+      ],
+      "operations": [
+        {
+          "type": "replace",
+          "from": "return 1.0f - pow(1.0f - val, power);",
+          "to": "// Fast Blend\r\n\t\treturn val;"
+        },
+        {
+          "type": "replace",
+          "from": "return saturate(r0 + pow(1.0 + clamp(dot(normalize(incidentLightDir), -normalize(surfaceNormal)), -1.0f, 0.0f), 3.0));",
+          "to": "// Ground Ultra Performance Patched\r\n\t\treturn (float3)r0;"
+        }
+      ]
+    }
+  ]
+}

@@ -43,6 +43,23 @@ and other large folders where a one-line edit would otherwise walk thousands of 
 Matching is case-insensitive and accepts backslashes. `exclude` still applies on top of `files`.
 An empty list is a validation error: omit the field to walk the whole root.
 
+Operations normally live at the patch level and run against every file the targets select. Add
+`operations` **inside a target** to scope them: when present, that list replaces the patch-level
+list for the files of that target only. Use it when two files share the same pattern but need
+different replacements:
+
+```json
+"targets": [
+  { "root": "shaders", "extensions": [".hlsl"], "files": ["shaders/blur.hlsl"],
+    "operations": [ { "type": "replaceRegex", "from": "(float4\\s+ApplyBlur...", "to": "$1..." } ] },
+  { "root": "shaders", "extensions": [".hlsl"], "files": ["shaders/depthawareblur.hlsl"],
+    "operations": [ { "type": "replaceRegex", "from": "(float4\\s+ApplyBlur...", "to": "$1..." } ] }
+]
+```
+
+A patch with no patch-level operations is valid as long as every target carries its own list. An
+empty `operations` array on a target is a validation error.
+
 ## Operations
 
 | Type | Fields | Effect |

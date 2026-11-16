@@ -7,12 +7,18 @@ namespace Hollowwork.Patches;
 /// A directory root, the extensions to walk and, optionally, an explicit allowlist of paths.
 /// When <paramref name="Files"/> is set, only those paths are planned; the root scan is used to
 /// enumerate candidates and everything outside the allowlist is ignored silently.
+/// <para>
+/// <paramref name="Operations"/> scopes the operations to this target. When it is set, the
+/// planner uses it instead of the patch-level list, which lets one patch apply different edits
+/// to files that share the same shape.
+/// </para>
 /// </summary>
 public sealed record PatchTarget(
     [property: JsonPropertyName("root")] string Root,
     [property: JsonPropertyName("extensions")] IReadOnlyList<string> Extensions,
     [property: JsonPropertyName("exclude")] IReadOnlyList<string>? Exclude = null,
-    [property: JsonPropertyName("files")] IReadOnlyList<string>? Files = null);
+    [property: JsonPropertyName("files")] IReadOnlyList<string>? Files = null,
+    [property: JsonPropertyName("operations")] IReadOnlyList<PatchOperation>? Operations = null);
 
 public sealed record PatchOperation(
     [property: JsonPropertyName("type")] string Type,
@@ -92,52 +98,82 @@ public static class PatchLoader
         if (string.IsNullOrWhiteSpace(definition.Game)) throw new PatchValidationException($"Patch '{definition.Id}' has no game.");
         if (!Games.Contains(definition.Game)) throw new PatchValidationException($"Patch '{definition.Id}' has unknown game '{definition.Game}'.");
         if (definition.Targets is null || definition.Targets.Count == 0) throw new PatchValidationException($"Patch '{definition.Id}' has no targets.");
-        if (definition.Operations is null || definition.Operations.Count == 0) throw new PatchValidationException($"Patch '{definition.Id}' has no operations.");
+
+        var patchOperations = definition.Operations ?? [];
+        var hasTargetOperations = false;
 
         foreach (var target in definition.Targets)
         {
             if (string.IsNullOrWhiteSpace(target.Root)) throw new PatchValidationException($"Patch '{definition.Id}' has a target without root.");
             if (target.Extensions is null || target.Extensions.Count == 0) throw new PatchValidationException($"Patch '{definition.Id}' has a target without extensions.");
 
-            if (target.Files is null)
+            ValidateFiles(definition.Id, target.Files);
+
+            if (target.Operations is null)
             {
                 continue;
             }
 
-            if (target.Files.Count == 0)
+            if (target.Operations.Count == 0)
             {
-                throw new PatchValidationException($"Patch '{definition.Id}' has an empty 'files' list; remove the field to walk the whole root.");
+                throw new PatchValidationException($"Patch '{definition.Id}' has a target with an empty 'operations' list.");
             }
 
-            foreach (var file in target.Files)
-            {
-                if (string.IsNullOrWhiteSpace(file))
-                {
-                    throw new PatchValidationException($"Patch '{definition.Id}' has a blank entry in 'files'.");
-                }
-
-                if (file.Contains("..", StringComparison.Ordinal))
-                {
-                    throw new PatchValidationException($"Patch '{definition.Id}' has a 'files' entry that escapes the root: '{file}'.");
-                }
-            }
+            hasTargetOperations = true;
+            ValidateOperations(definition.Id, target.Operations, $"target '{target.Root}'");
         }
 
-        foreach (var operation in definition.Operations)
+        if (patchOperations.Count == 0 && !hasTargetOperations)
+        {
+            throw new PatchValidationException($"Patch '{definition.Id}' has no operations.");
+        }
+
+        ValidateOperations(definition.Id, patchOperations, "patch");
+    }
+
+    private static void ValidateFiles(string patchId, IReadOnlyList<string>? files)
+    {
+        if (files is null)
+        {
+            return;
+        }
+
+        if (files.Count == 0)
+        {
+            throw new PatchValidationException($"Patch '{patchId}' has an empty 'files' list; remove the field to walk the whole root.");
+        }
+
+        foreach (var file in files)
+        {
+            if (string.IsNullOrWhiteSpace(file))
+            {
+                throw new PatchValidationException($"Patch '{patchId}' has a blank entry in 'files'.");
+            }
+
+            if (file.Contains("..", StringComparison.Ordinal))
+            {
+                throw new PatchValidationException($"Patch '{patchId}' has a 'files' entry that escapes the root: '{file}'.");
+            }
+        }
+    }
+
+    private static void ValidateOperations(string patchId, IReadOnlyList<PatchOperation> operations, string scope)
+    {
+        foreach (var operation in operations)
         {
             if (!OperationTypes.Contains(operation.Type))
             {
-                throw new PatchValidationException($"Patch '{definition.Id}' uses unknown operation '{operation.Type}'.");
+                throw new PatchValidationException($"Patch '{patchId}' {scope} uses unknown operation '{operation.Type}'.");
             }
 
             if (operation.Type is "replace" or "replaceExtension" or "setBool" or "replaceRegex" && string.IsNullOrEmpty(operation.From))
             {
-                throw new PatchValidationException($"Patch '{definition.Id}' operation '{operation.Type}' requires 'from'.");
+                throw new PatchValidationException($"Patch '{patchId}' {scope} operation '{operation.Type}' requires 'from'.");
             }
 
             if (operation.Type == "setText" && operation.To is null)
             {
-                throw new PatchValidationException($"Patch '{definition.Id}' operation 'setText' requires 'to'.");
+                throw new PatchValidationException($"Patch '{patchId}' {scope} operation 'setText' requires 'to'.");
             }
         }
     }
