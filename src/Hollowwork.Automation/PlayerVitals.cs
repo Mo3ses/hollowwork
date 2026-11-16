@@ -14,6 +14,18 @@ public readonly record struct PlayerVitals(
 
     public double MpPercent => MaxMp > 0 ? Mp * 100d / MaxMp : 0;
 
+    /// <summary>
+    /// Slider percentage plus the pool it maps to, e.g. <c>5% · 42</c>. With no known maximum the
+    /// percentage stands alone.
+    /// </summary>
+    public static string DescribeThreshold(double percent, int max)
+    {
+        var rounded = Math.Round(percent, 1);
+        return max > 0
+            ? $"{rounded:0.#}% · {Math.Round(max * percent / 100d):0}"
+            : $"{rounded:0.#}%";
+    }
+
     public bool IsSane =>
         MaxHp > 0 &&
         Hp >= 0 &&

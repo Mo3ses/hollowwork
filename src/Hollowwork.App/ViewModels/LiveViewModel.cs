@@ -35,6 +35,9 @@ public sealed class LiveViewModel : INotifyPropertyChanged, IDisposable
     private double _hpPercent;
     private double _esPercent;
     private double _mpPercent;
+    private int _maxHp;
+    private int _maxEs;
+    private int _maxMp;
     private bool _isRunning;
 
     public LiveViewModel()
@@ -78,20 +81,45 @@ public sealed class LiveViewModel : INotifyPropertyChanged, IDisposable
     public double HpThreshold
     {
         get => _hpThreshold;
-        set => Set(ref _hpThreshold, value);
+        set
+        {
+            if (Set(ref _hpThreshold, value))
+            {
+                OnPropertyChanged(nameof(HpThresholdLabel));
+            }
+        }
     }
 
     public double EsThreshold
     {
         get => _esThreshold;
-        set => Set(ref _esThreshold, value);
+        set
+        {
+            if (Set(ref _esThreshold, value))
+            {
+                OnPropertyChanged(nameof(EsThresholdLabel));
+            }
+        }
     }
 
     public double MpThreshold
     {
         get => _mpThreshold;
-        set => Set(ref _mpThreshold, value);
+        set
+        {
+            if (Set(ref _mpThreshold, value))
+            {
+                OnPropertyChanged(nameof(MpThresholdLabel));
+            }
+        }
     }
+
+    /// <summary>Slider value plus the pool it maps to, once the game reports a maximum.</summary>
+    public string HpThresholdLabel => ThresholdLabel(HpThreshold, _maxHp);
+
+    public string EsThresholdLabel => ThresholdLabel(EsThreshold, _maxEs);
+
+    public string MpThresholdLabel => ThresholdLabel(MpThreshold, _maxMp);
 
     public string HpKey
     {
@@ -319,6 +347,16 @@ public sealed class LiveViewModel : INotifyPropertyChanged, IDisposable
             PauseInHideout);
     }
 
+    private static string ThresholdLabel(double percent, int max) =>
+        PlayerVitals.DescribeThreshold(percent, max);
+
+    private void UpdateThresholdLabels()
+    {
+        OnPropertyChanged(nameof(HpThresholdLabel));
+        OnPropertyChanged(nameof(EsThresholdLabel));
+        OnPropertyChanged(nameof(MpThresholdLabel));
+    }
+
     private void UpdateAreaHint()
     {
         var path = string.IsNullOrWhiteSpace(_clientLogPath) ? AreaWatcher.Discover() : _clientLogPath.Trim();
@@ -364,6 +402,14 @@ public sealed class LiveViewModel : INotifyPropertyChanged, IDisposable
         }
 
         var value = vitals.Value;
+        if (value.MaxHp != _maxHp || value.MaxEs != _maxEs || value.MaxMp != _maxMp)
+        {
+            _maxHp = value.MaxHp;
+            _maxEs = value.MaxEs;
+            _maxMp = value.MaxMp;
+            UpdateThresholdLabels();
+        }
+
         HpText = $"HP {value.Hp} / {value.MaxHp} ({value.HpPercent:0}%)";
         EsText = $"ES {value.Es} / {value.MaxEs} ({value.EsPercent:0}%)";
         MpText = $"MP {value.Mp} / {value.MaxMp} ({value.MpPercent:0}%)";

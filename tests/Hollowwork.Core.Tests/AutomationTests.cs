@@ -252,4 +252,13 @@ public class AutomationTests
             File.Delete(path);
         }
     }
+
+    [Theory]
+    [InlineData(5, 848, "5% · 42")]
+    [InlineData(40, 1450, "40% · 580")]
+    [InlineData(50, 0, "50%")]
+    public void Describes_a_threshold_in_points(double percent, int max, string expected)
+    {
+        Assert.Equal(expected, PlayerVitals.DescribeThreshold(percent, max));
+    }
 }

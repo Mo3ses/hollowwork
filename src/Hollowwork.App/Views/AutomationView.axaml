@@ -65,19 +65,19 @@
                     <Slider Grid.Row="0" Grid.Column="1" Minimum="1" Maximum="99"
                             Value="{Binding HpThreshold}" Margin="8,0" />
                     <TextBlock Grid.Row="0" Grid.Column="2" Classes="mono faint"
-                               Text="{Binding HpThreshold, StringFormat={}{0:0}%}" VerticalAlignment="Center" />
+                               Text="{Binding HpThresholdLabel}" VerticalAlignment="Center" />
 
                     <CheckBox Grid.Row="1" Content="ES" IsChecked="{Binding EsEnabled}" />
                     <Slider Grid.Row="1" Grid.Column="1" Minimum="1" Maximum="99"
                             Value="{Binding EsThreshold}" Margin="8,0" />
                     <TextBlock Grid.Row="1" Grid.Column="2" Classes="mono faint"
-                               Text="{Binding EsThreshold, StringFormat={}{0:0}%}" VerticalAlignment="Center" />
+                               Text="{Binding EsThresholdLabel}" VerticalAlignment="Center" />
 
                     <CheckBox Grid.Row="2" Content="MP" IsChecked="{Binding MpEnabled}" />
                     <Slider Grid.Row="2" Grid.Column="1" Minimum="1" Maximum="99"
                             Value="{Binding MpThreshold}" Margin="8,0" />
                     <TextBlock Grid.Row="2" Grid.Column="2" Classes="mono faint"
-                               Text="{Binding MpThreshold, StringFormat={}{0:0}%}" VerticalAlignment="Center" />
+                               Text="{Binding MpThresholdLabel}" VerticalAlignment="Center" />
                 </Grid>
             </StackPanel>
 
