@@ -10,8 +10,8 @@ local and offline; the optional FLIP tab uses the public market API, and the AUT
 the game process only after you press START. The patch engine never touches the game process.
 
 > Status: GGPK/Bundles2 browser, dry-run patch planner, applier, path protection and verified
-> backup are implemented. FLIP (read-only market screener) and AUTOMATION (PoE1 auto-flask) are
-> available as optional tabs.
+> backup are implemented, with a shipped PoE1 patch set. FLIP (read-only market screener) and
+> AUTOMATION (PoE1 auto-flask) are optional tabs.
 
 ## Why
 
@@ -29,10 +29,13 @@ Modding client assets should be reversible and boring:
 - Bundles2 read and write on Linux and Windows, using a user-provided Oodle library
   (`docs/OODLE.md`); Proton is the fallback.
 - Tree explorer with text and DDS preview.
-- Declarative patch engine: replace, extension swap, boolean flags, block stripping.
+- Declarative patch engine: literal replace, regex, extension swap, boolean flags, block
+  stripping, line removal, explicit file allowlists and per-target operations.
+- 11 shipped PoE1 patches: camera, minimap, terrain, Delirium, fog, loading screen, particles,
+  MTX, shadows and a 15-shader performance patch.
 - Path protection: keep chosen paths out of every patch.
 - Backup and restore with SHA-256 manifests.
-- Profiles per game.
+- Remembers the last archive, the selected game and every patch parameter between sessions.
 - FLIP tab: read-only currency market screener with spread, volume, stock, trend and confidence.
   Three presets — **LIQUID**, **BALANCED**, **AGGRESSIVE** — plus a category filter
   (**currency / boss keys / cards / gems**), an in-app **GUIDE**, and hourly responses cached
@@ -41,10 +44,31 @@ Modding client assets should be reversible and boring:
   the configured HP/MP/ES flask keys through X11 XTest. It is separate from the patch engine and
   does not use AutoHotkey.
 
-Planned after v1: minimap colours, camera tweaks, MTX preview. Order placement and trade bots are
-**out of scope**; AUTOMATION is local, opt-in, and currently limited to auto-flask.
+Planned next: PoE2 patch coverage, shared profiles, a global hotkey with a panic stop, and pausing
+automation in town or while a zone loads. Order placement and trade bots are **out of scope**;
+AUTOMATION is local, opt-in, and currently limited to auto-flask.
+
+## Shipped patches (PoE1)
+
+| Patch | Files | What it does |
+|---|---|---|
+| **Camera zoom** | `metadata/characters/character.ot` | Sets the zoom of the player camera node |
+| **Map revealed** | minimap visibility shader | Raises the minimap visibility floor |
+| **Minimap colors** | minimap blending shader | Recolors explored, edge and unexplored areas |
+| **Clean terrain** | `metadata/terrain/doodads`, `.ao` | Strips doodad blocks that cost draw time |
+| **Delirium off** | 2 roots, `.ao` | Strips Delirium environment blocks |
+| **Fog off** | `metadata/environmentsettings`, `.env` | Disables the fog block |
+| **No loading screen** | `metadata/ui/loadingstate`, `.ui` | Hides the loading widgets |
+| **Particles off** | `.pet` in 2 roots | Empties environment particle effects |
+| **Performance** | 15 shaders | Cuts post-processing, screen-space effects and lighting work |
+| **Remove MTX effects** | `metadata/effects/microtransactions`, `.ao` | Strips cosmetic effect blocks |
+| **Shadows off** | `metadata/environmentsettings`, `.env` | Sets `shadows_enabled` to false |
+
+Every patch runs as a dry run first and lists the files and lines it would touch.
 
 ## AUTOMATION (PoE1, Linux)
+
+![AUTOMATION tab](docs/screenshot-automation.png)
 
 The **AUTOMATION** tab reads HP/ES/MP directly from the PoE1 process and can press the configured
 flask keys while the game window is focused. It never runs until you press **START**, and keys are
@@ -65,6 +89,8 @@ Automation is gameplay automation and violates the game's terms; account restric
 possible. The current module only does auto-flask — no logout, skills, overlay or trade automation.
 
 ## Currency FLIP
+
+![FLIP tab](docs/screenshot-flip.png)
 
 Open the **FLIP** tab, pick a league and press **REFRESH**. The app reads the public
 `web.poecdn.com/api/currency-exchange` aggregate for the last six hours, caches it locally and
@@ -136,9 +162,12 @@ Coverage comparison against an external reference suite: `docs/PATCH-PARITY.md`.
 
 ## Safety
 
-- Hollowwork does not inject into, hook, or read the memory of the game.
-- It only edits local archive files, and only after a backup.
-- Modifying client assets may violate the game's Terms of Service. Use at your own risk.
+- The patch engine never injects into, hooks, or reads the memory of the game. It edits local
+  archive files only, and only after a verified backup.
+- The AUTOMATION tab reads HP/ES/MP from the game process with `process_vm_readv`, only after you
+  press **START**, and sends keys through X11. Stop it before changing character or area.
+- Modifying client assets or automating gameplay may violate the game's Terms of Service. Use at
+  your own risk.
 
 ## License
 
