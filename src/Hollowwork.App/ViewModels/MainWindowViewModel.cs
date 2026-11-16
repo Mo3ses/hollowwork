@@ -26,6 +26,13 @@ public enum WorkspaceMode
     Settings,
 }
 
+public enum CompactTab
+{
+    Patches,
+    Flip,
+    Automation,
+}
+
 public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 {
     private const int PreviewLimit = 200_000;
@@ -51,7 +58,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     private string _applyLabel = "APPLY";
     private bool _canApply;
     private bool _isBusy;
-    private bool _isPatchTab = true;
+    private CompactTab _compactTab = CompactTab.Patches;
     private string _selectedGame = "poe1";
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -74,32 +81,31 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 
     public FlipViewModel Flip { get; } = new();
 
-    public bool IsPatchTab => _isPatchTab;
+    public LiveViewModel Automation { get; } = new();
 
-    public bool IsFlipTab => !_isPatchTab;
+    public bool IsPatchTab => _compactTab == CompactTab.Patches;
 
-    public void SelectPatchTab()
+    public bool IsFlipTab => _compactTab == CompactTab.Flip;
+
+    public bool IsAutomationTab => _compactTab == CompactTab.Automation;
+
+    public void SelectPatchTab() => SetCompactTab(CompactTab.Patches);
+
+    public void SelectFlipTab() => SetCompactTab(CompactTab.Flip);
+
+    public void SelectAutomationTab() => SetCompactTab(CompactTab.Automation);
+
+    private void SetCompactTab(CompactTab tab)
     {
-        if (_isPatchTab)
+        if (_compactTab == tab)
         {
             return;
         }
 
-        _isPatchTab = true;
+        _compactTab = tab;
         OnPropertyChanged(nameof(IsPatchTab));
         OnPropertyChanged(nameof(IsFlipTab));
-    }
-
-    public void SelectFlipTab()
-    {
-        if (!_isPatchTab)
-        {
-            return;
-        }
-
-        _isPatchTab = false;
-        OnPropertyChanged(nameof(IsPatchTab));
-        OnPropertyChanged(nameof(IsFlipTab));
+        OnPropertyChanged(nameof(IsAutomationTab));
     }
 
     public string SelectedGame
@@ -579,6 +585,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     {
         PersistParameters();
         Flip.Dispose();
+        Automation.Dispose();
         _session?.Dispose();
         _session = null;
     }

@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:Hollowwork.App.ViewModels"
+        xmlns:views="using:Hollowwork.App.Views"
         xmlns:cp="using:Avalonia.Controls"
         x:Class="Hollowwork.App.Views.CompactWindow"
         x:DataType="vm:MainWindowViewModel"
@@ -57,7 +58,6 @@
                     <TextBlock Classes="brand" Text="HOLLOWWORK" />
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                    <Button Classes="ghost" Content="LIVE" Click="OnLiveClicked" />
                     <Button Classes="ghost" Content="BACKUP" Click="OnBackupClicked" />
                     <Button Classes="primary" Content="OPEN" Click="OnOpenClicked" />
                 </StackPanel>
@@ -72,6 +72,8 @@
                             Click="OnPatchesTabClicked" />
                     <Button Classes="tab" Classes.active="{Binding IsFlipTab}" Content="FLIP"
                             Click="OnFlipTabClicked" />
+                    <Button Classes="tab" Classes.active="{Binding IsAutomationTab}" Content="AUTOMATION"
+                            Click="OnAutomationTabClicked" />
                 </StackPanel>
                 <ComboBox Grid.Column="1" Width="86" Height="26" FontSize="11"
                           VerticalAlignment="Center"
@@ -217,6 +219,10 @@
             <TextBlock Grid.Row="3" IsVisible="{Binding Flip.IsEmpty}" Margin="18,10"
                        Classes="mono faint" TextWrapping="Wrap"
                        Text="No pairs meet this strategy. Try BALANCED, another category, or REFRESH." />
+        </Grid>
+
+        <Grid Grid.Row="3" IsVisible="{Binding IsAutomationTab}">
+            <views:AutomationView DataContext="{Binding Automation}" />
         </Grid>
 
         <Border Grid.Row="4" IsVisible="{Binding IsPatchTab}"
