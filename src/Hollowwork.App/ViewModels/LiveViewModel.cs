@@ -51,6 +51,7 @@ public sealed class LiveViewModel : INotifyPropertyChanged, IDisposable
             StatusText = $"PROFILE ERROR · {exception.Message}";
         }
 
+        UpdateAreaHint();
         _timer = new DispatcherTimer(TimeSpan.FromMilliseconds(150), DispatcherPriority.Background, (_, _) => Refresh());
     }
 
@@ -138,7 +139,13 @@ public sealed class LiveViewModel : INotifyPropertyChanged, IDisposable
     public string ClientLogPath
     {
         get => _clientLogPath;
-        set => Set(ref _clientLogPath, value);
+        set
+        {
+            if (Set(ref _clientLogPath, value) && !IsRunning)
+            {
+                UpdateAreaHint();
+            }
+        }
     }
 
     public string AreaText
@@ -305,6 +312,12 @@ public sealed class LiveViewModel : INotifyPropertyChanged, IDisposable
             RequireFocus,
             PauseInTown,
             PauseInHideout);
+    }
+
+    private void UpdateAreaHint()
+    {
+        var path = string.IsNullOrWhiteSpace(_clientLogPath) ? AreaWatcher.Discover() : _clientLogPath.Trim();
+        AreaText = path is null ? "AREA OFF · Client.txt not found" : $"AREA · {path}";
     }
 
     private void Refresh()
