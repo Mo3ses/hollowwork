@@ -244,6 +244,9 @@ public sealed class LiveViewModel : INotifyPropertyChanged, IDisposable
 
         try
         {
+            _engine?.Dispose();
+            _engine = null;
+
             var input = new X11KeySink();
             var focus = new X11FocusProbe();
             _area = new AreaWatcher(string.IsNullOrWhiteSpace(ClientLogPath) ? null : ClientLogPath.Trim());
@@ -251,7 +254,9 @@ public sealed class LiveViewModel : INotifyPropertyChanged, IDisposable
             _engine = new AutoFlaskEngine(reader!, input, focus, _profile, _area);
             _engine.Start(Options());
             IsRunning = true;
-            StatusText = $"RUNNING · PID {_engine.ProcessId}";
+            StatusText = _engine.IsAttached
+                ? $"RUNNING · PID {_engine.ProcessId}"
+                : $"WAITING FOR PLAYER · {error}";
             LastAction = "Attached. Flask keys are sent only while the game is focused.";
             _timer.Start();
         }
@@ -325,6 +330,13 @@ public sealed class LiveViewModel : INotifyPropertyChanged, IDisposable
         if (_engine is null)
         {
             return;
+        }
+
+        if (!_engine.IsRunning && IsRunning)
+        {
+            // The game closed and the engine stopped itself.
+            IsRunning = false;
+            _timer.Stop();
         }
 
         StatusText = _engine.StatusText;

@@ -149,6 +149,14 @@ public sealed class AutoFlaskEngine : IDisposable
                 var vitals = _reader.ReadVitals();
                 if (vitals is null)
                 {
+                    if (!_reader.IsProcessAlive)
+                    {
+                        SetStatus("GAME CLOSED · press START after reopening");
+                        _running = false;
+                        _cts?.Cancel();
+                        break;
+                    }
+
                     if (!_reader.TryAttach(out var error))
                     {
                         SetStatus($"ATTACH FAILED · {error}");
