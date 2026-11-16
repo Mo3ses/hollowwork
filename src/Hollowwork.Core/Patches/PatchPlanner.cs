@@ -53,13 +53,17 @@ public sealed class PatchPlanner
         foreach (var selection in selections)
         {
             var patch = selection.Definition;
-            var operations = patch.Operations
+            var operations = (patch.Operations ?? [])
                 .Select(operation => Substitute(operation, selection.Values))
                 .ToList();
 
             foreach (var target in patch.Targets)
             {
                 cancellationToken.ThrowIfCancellationRequested();
+
+                var targetOperations = target.Operations is null
+                    ? operations
+                    : target.Operations.Select(operation => Substitute(operation, selection.Values)).ToList();
 
                 var root = target.Root.Replace('\\', '/').Trim('/');
                 var allowlist = BuildAllowlist(target.Files);
@@ -114,7 +118,7 @@ public sealed class PatchPlanner
                         working.Add(path, file);
                     }
 
-                    foreach (var operation in operations)
+                    foreach (var operation in targetOperations)
                     {
                         if (!string.IsNullOrEmpty(operation.Unless)
                             && file.Current.Contains(operation.Unless, StringComparison.Ordinal))

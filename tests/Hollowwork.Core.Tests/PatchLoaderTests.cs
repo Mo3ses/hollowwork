@@ -126,4 +126,64 @@ public class PatchLoaderTests
         Assert.NotNull(directory);
         return Path.Combine(directory.FullName, "patches");
     }
+
+    [Fact]
+    public void Loads_target_scoped_operations()
+    {
+        const string json = """
+        {
+          "id": "poe1.perf",
+          "name": "Perf",
+          "description": "test",
+          "game": "poe1",
+          "targets": [
+            {
+              "root": "shaders",
+              "extensions": [".hlsl"],
+              "files": ["shaders/a.hlsl"],
+              "operations": [ { "type": "replace", "from": "a", "to": "b" } ]
+            }
+          ]
+        }
+        """;
+
+        var patch = PatchLoader.Load(json);
+
+        Assert.Empty(patch.Operations ?? []);
+        Assert.Single(Assert.Single(patch.Targets).Operations!);
+    }
+
+    [Fact]
+    public void Rejects_empty_target_operations()
+    {
+        const string json = """
+        {
+          "id": "poe1.perf",
+          "name": "Perf",
+          "description": "test",
+          "game": "poe1",
+          "targets": [
+            { "root": "shaders", "extensions": [".hlsl"], "operations": [] }
+          ]
+        }
+        """;
+
+        Assert.Throws<PatchValidationException>(() => PatchLoader.Load(json));
+    }
+
+    [Fact]
+    public void Rejects_patch_without_any_operation()
+    {
+        const string json = """
+        {
+          "id": "poe1.perf",
+          "name": "Perf",
+          "description": "test",
+          "game": "poe1",
+          "targets": [ { "root": "shaders", "extensions": [".hlsl"] } ]
+        }
+        """;
+
+        Assert.Throws<PatchValidationException>(() => PatchLoader.Load(json));
+    }
 }

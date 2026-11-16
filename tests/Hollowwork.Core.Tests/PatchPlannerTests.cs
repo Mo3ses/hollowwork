@@ -184,4 +184,31 @@ public class PatchPlannerTests
 
         Assert.Single(plan.Files);
     }
+
+    [Fact]
+    public void Target_operations_override_patch_level_operations()
+    {
+        using var archive = new MemoryArchive();
+        archive.AddText("shaders/a.hlsl", "value");
+        archive.AddText("shaders/b.hlsl", "value");
+
+        var patch = new PatchDefinition(
+            "perf",
+            "Perf",
+            "test",
+            "poe1",
+            [
+                new PatchTarget("shaders", [".hlsl"], null, ["shaders/a.hlsl"],
+                    [new PatchOperation("replace", "value", "A")]),
+                new PatchTarget("shaders", [".hlsl"], null, ["shaders/b.hlsl"],
+                    [new PatchOperation("replace", "value", "B")]),
+            ],
+            [new PatchOperation("replace", "value", "patch")]);
+
+        var plan = new PatchPlanner().Plan(archive, [patch]);
+
+        Assert.Equal(2, plan.Files.Count);
+        Assert.Equal("A", plan.Files.Single(file => file.Path == "shaders/a.hlsl").UpdatedText);
+        Assert.Equal("B", plan.Files.Single(file => file.Path == "shaders/b.hlsl").UpdatedText);
+    }
 }
