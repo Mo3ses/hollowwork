@@ -261,4 +261,39 @@ public class AutomationTests
     {
         Assert.Equal(expected, PlayerVitals.DescribeThreshold(percent, max));
     }
+
+    [Fact]
+    public void Parses_a_key_list()
+    {
+        Assert.Equal(["1", "2"], FlaskChannel.Parse("1, 2;"));
+        Assert.Equal(["q", "F1"], FlaskChannel.Parse("q F1"));
+        Assert.Empty(FlaskChannel.Parse("   "));
+    }
+
+    [Fact]
+    public void Deduplicates_keys()
+    {
+        Assert.Equal(["1", "2"], FlaskChannel.Parse("1,1,2, 2"));
+    }
+
+    [Fact]
+    public void Rotates_keys_and_respects_the_cooldown()
+    {
+        var channel = new FlaskChannel("1,2");
+        var start = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
+        Assert.Equal("1", channel.Press(start, 1000));
+        Assert.Null(channel.Press(start.AddMilliseconds(500), 1000));
+        Assert.Equal("2", channel.Press(start.AddMilliseconds(1000), 1000));
+        Assert.Equal("1", channel.Press(start.AddMilliseconds(2000), 1000));
+    }
+
+    [Fact]
+    public void Empty_channel_never_presses()
+    {
+        var channel = new FlaskChannel(null);
+
+        Assert.True(channel.IsEmpty);
+        Assert.Null(channel.Press(DateTime.UtcNow, 0));
+    }
 }

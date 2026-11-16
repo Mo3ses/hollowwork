@@ -115,6 +115,10 @@ field to enable it. Some installs only write the log when the game runs with `--
 Town and hideout names come from the log, so they are matched in English: a client in another
 language is treated as a map and keys keep working.
 
+Each flask field takes one key or a list (`1,2`). A list alternates between the keys, which covers
+two flasks of the same resource. Charges are not read: when a flask is empty the client ignores the
+press and the next key in the list still gets its turn.
+
 ## Currency FLIP
 
 ![FLIP tab](docs/screenshot-flip.png)
