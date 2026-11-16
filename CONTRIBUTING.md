@@ -11,9 +11,33 @@ dotnet run --project src/Hollowwork.App
 
 Linux and Windows are first-class. If you touch the UI, run the app on both.
 
+## Naming — no third-party app or product names
+
+**Never name another application, client, tool or product** — not in source, comments, docs, UI
+strings, patch files, test names, commit messages, branch names, issues, pull requests, reviews or
+chat. This rule has no exception for "just a comparison" or "just a credit".
+
+Use generic wording instead:
+
+| Instead of the name | Write |
+|---|---|
+| another mod manager / client | `reference suite`, `reference app`, `another client` |
+| an external reverse-engineering dump | `external reference dump` |
+| a feature they ship | `the equivalent feature in the reference suite` |
+
+Rationale: the repository documents its own behavior. Borrowed names imply endorsement, drag in
+licensing and support expectations, and turn a technical document into an advertisement for
+someone else's product. Comparisons stay useful when they describe the *mechanism* — target paths,
+operations, coverage, confidence — and not the brand.
+
+If a comparison needs provenance, point at the artifact's own identifier (a file hash, a version
+string, a commit id), never at the product name.
+
 ## Pull requests
 
 - One concern per pull request.
+- No third-party names, as described above. Check the diff, the commit message, the branch name
+  and the pull request title/body before opening.
 - New dependency? Add a one-line justification.
 - New patch? Follow `docs/PATCH-FORMAT.md` and keep targets narrow.
 - No network calls, no telemetry, no process interaction.
