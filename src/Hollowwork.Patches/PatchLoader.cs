@@ -3,7 +3,16 @@ using System.Text.Json.Serialization;
 
 namespace Hollowwork.Patches;
 
-public sealed record PatchTarget(string Root, IReadOnlyList<string> Extensions, IReadOnlyList<string>? Exclude = null);
+/// <summary>
+/// A directory root, the extensions to walk and, optionally, an explicit allowlist of paths.
+/// When <paramref name="Files"/> is set, only those paths are planned; the root scan is used to
+/// enumerate candidates and everything outside the allowlist is ignored silently.
+/// </summary>
+public sealed record PatchTarget(
+    [property: JsonPropertyName("root")] string Root,
+    [property: JsonPropertyName("extensions")] IReadOnlyList<string> Extensions,
+    [property: JsonPropertyName("exclude")] IReadOnlyList<string>? Exclude = null,
+    [property: JsonPropertyName("files")] IReadOnlyList<string>? Files = null);
 
 public sealed record PatchOperation(
     [property: JsonPropertyName("type")] string Type,
@@ -89,6 +98,29 @@ public static class PatchLoader
         {
             if (string.IsNullOrWhiteSpace(target.Root)) throw new PatchValidationException($"Patch '{definition.Id}' has a target without root.");
             if (target.Extensions is null || target.Extensions.Count == 0) throw new PatchValidationException($"Patch '{definition.Id}' has a target without extensions.");
+
+            if (target.Files is null)
+            {
+                continue;
+            }
+
+            if (target.Files.Count == 0)
+            {
+                throw new PatchValidationException($"Patch '{definition.Id}' has an empty 'files' list; remove the field to walk the whole root.");
+            }
+
+            foreach (var file in target.Files)
+            {
+                if (string.IsNullOrWhiteSpace(file))
+                {
+                    throw new PatchValidationException($"Patch '{definition.Id}' has a blank entry in 'files'.");
+                }
+
+                if (file.Contains("..", StringComparison.Ordinal))
+                {
+                    throw new PatchValidationException($"Patch '{definition.Id}' has a 'files' entry that escapes the root: '{file}'.");
+                }
+            }
         }
 
         foreach (var operation in definition.Operations)

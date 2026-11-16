@@ -31,6 +31,18 @@ A patch is a JSON file under `patches/poe1/` or `patches/poe2/`. It is data, not
 A target is a directory root (relative to the archive root) plus the file extensions to walk.
 The engine resolves the subtree lazily and reports the file count during the dry run.
 
+Add `files` when the root is wide but only a few paths matter. The list is an exact allowlist of
+archive paths; everything else under the root is ignored without being read. Use it for shaders
+and other large folders where a one-line edit would otherwise walk thousands of files:
+
+```json
+{ "root": "shaders", "extensions": [".hlsl"],
+  "files": ["shaders/minimap_visibility_pixel.hlsl"] }
+```
+
+Matching is case-insensitive and accepts backslashes. `exclude` still applies on top of `files`.
+An empty list is a validation error: omit the field to walk the whole root.
+
 ## Operations
 
 | Type | Fields | Effect |
@@ -41,7 +53,15 @@ The engine resolves the subtree lazily and reports the file count during the dry
 | `stripBlock` | `from` | empties a named block, preserving braces |
 | `removeLines` | `from` | removes lines matching a regex (opt-in, reported) |
 
-All operations are applied in order, per file. The plan records:
+All operations are applied in order, per file. Any operation also accepts `unless`: when the file
+already contains that literal text, the operation is skipped and reported as `0 hits`. Use it to
+keep a patch idempotent, so re-applying it to an already patched archive does nothing:
+
+```json
+{ "type": "replace", "from": "...", "to": "...", "unless": "res_color = max(res_color, " }
+```
+
+The plan records:
 
 ```
 file  metadata/environmentsettings/...env

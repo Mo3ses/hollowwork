@@ -62,9 +62,15 @@ public sealed class PatchPlanner
                 cancellationToken.ThrowIfCancellationRequested();
 
                 var root = target.Root.Replace('\\', '/').Trim('/');
+                var allowlist = BuildAllowlist(target.Files);
                 foreach (var path in archive.ListFiles(root, target.Extensions))
                 {
                     cancellationToken.ThrowIfCancellationRequested();
+
+                    if (allowlist is not null && !allowlist.Contains(path))
+                    {
+                        continue;
+                    }
 
                     if (PathProtection.IsProtected(path, roots))
                     {
@@ -132,6 +138,22 @@ public sealed class PatchPlanner
             .ToList();
 
         return new PatchPlan(planned, skipped);
+    }
+
+    private static HashSet<string>? BuildAllowlist(IReadOnlyList<string>? files)
+    {
+        if (files is null || files.Count == 0)
+        {
+            return null;
+        }
+
+        var set = new HashSet<string>(files.Count, StringComparer.OrdinalIgnoreCase);
+        foreach (var file in files)
+        {
+            set.Add(file.Replace('\\', '/').Trim('/'));
+        }
+
+        return set;
     }
 
     private static PatchOperation Substitute(PatchOperation operation, IReadOnlyDictionary<string, string> values)

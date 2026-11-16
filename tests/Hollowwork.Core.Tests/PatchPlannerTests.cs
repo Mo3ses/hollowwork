@@ -143,4 +143,45 @@ public class PatchPlannerTests
         Assert.True(plan.IsEmpty);
         Assert.Equal(0, plan.TotalChanges);
     }
+
+    [Fact]
+    public void Plans_only_files_in_the_allowlist()
+    {
+        using var archive = new MemoryArchive();
+        archive.AddText("shaders/minimap_blending_pixel.hlsl", "float4 walkable_color = float4(0, 0, 0, 0);");
+        archive.AddText("shaders/atlas_effects.hlsl", "float4 walkable_color = float4(0, 0, 0, 0);");
+
+        var patch = new PatchDefinition(
+            "minimap",
+            "Minimap",
+            "test",
+            "poe1",
+            [new PatchTarget("shaders", [".hlsl"], null, ["shaders/minimap_blending_pixel.hlsl"])],
+            [new PatchOperation("replace", "float4(0, 0, 0, 0)", "float4(1, 1, 1, 1)")]);
+
+        var plan = new PatchPlanner().Plan(archive, [patch]);
+
+        var file = Assert.Single(plan.Files);
+        Assert.Equal("shaders/minimap_blending_pixel.hlsl", file.Path);
+        Assert.Empty(plan.Skipped);
+    }
+
+    [Fact]
+    public void Allowlist_is_case_insensitive_and_accepts_backslashes()
+    {
+        using var archive = new MemoryArchive();
+        archive.AddText("shaders/minimap_blending_pixel.hlsl", "float4 walkable_color = float4(0, 0, 0, 0);");
+
+        var patch = new PatchDefinition(
+            "minimap",
+            "Minimap",
+            "test",
+            "poe1",
+            [new PatchTarget("shaders", [".hlsl"], null, [@"\SHADERS\Minimap_Blending_Pixel.hlsl"])],
+            [new PatchOperation("replace", "float4(0, 0, 0, 0)", "float4(1, 1, 1, 1)")]);
+
+        var plan = new PatchPlanner().Plan(archive, [patch]);
+
+        Assert.Single(plan.Files);
+    }
 }
