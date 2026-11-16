@@ -132,6 +132,7 @@ docs/
 ```
 
 Format reference: `docs/PATCH-FORMAT.md`.
+Coverage comparison against an external reference suite: `docs/PATCH-PARITY.md`.
 
 ## Safety
 
