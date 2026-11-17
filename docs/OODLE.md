@@ -25,6 +25,7 @@ Search order:
 3. Next to the executable.
 4. `%LOCALAPPDATA%\Hollowwork\oo2core\` (Windows) or
    `~/.local/share/Hollowwork/oo2core/` (Linux).
+5. Downloads, Documents and Desktop, plus one level below each, for a file with a matching name.
 
 The library is loaded with `NativeLibrary.SetDllImportResolver`, so any file name works as long as
 the path is given.
