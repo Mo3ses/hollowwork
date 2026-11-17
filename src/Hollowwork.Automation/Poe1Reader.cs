@@ -34,6 +34,12 @@ public sealed class Poe1Reader : IDisposable
     {
         get
         {
+            if (OperatingSystem.IsLinux())
+            {
+                // Cheaper and steadier than Process.HasExited for a game running under Proton.
+                return File.Exists($"/proc/{ProcessId}/stat");
+            }
+
             try
             {
                 using var process = Process.GetProcessById(ProcessId);

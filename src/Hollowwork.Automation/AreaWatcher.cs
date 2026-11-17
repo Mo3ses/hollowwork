@@ -105,7 +105,7 @@ public sealed class AreaWatcher : IAreaProbe, IDisposable
                 length = new FileInfo(_path!).Length;
             }
 
-            if (length == _position)
+            if (length == _position || _stream is null)
             {
                 return;
             }
