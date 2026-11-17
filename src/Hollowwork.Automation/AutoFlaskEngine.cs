@@ -11,7 +11,9 @@ public sealed record AutoFlaskOptions(
     string EsKey = "3",
     string MpKey = "2",
     int CooldownMs = 1000,
-    bool RequireFocus = true);
+    bool RequireFocus = true,
+    bool PauseInTown = true,
+    bool PauseInHideout = true);
 
 public sealed class AutoFlaskEngine : IDisposable
 {
@@ -19,12 +21,13 @@ public sealed class AutoFlaskEngine : IDisposable
     private readonly IKeySink _input;
     private readonly IFocusProbe _focus;
     private readonly AutomationProfile _profile;
+    private readonly IAreaProbe? _area;
     private CancellationTokenSource? _cts;
     private Task? _loop;
     private AutoFlaskOptions _options = new();
-    private DateTime _lastHpPress = DateTime.MinValue;
-    private DateTime _lastEsPress = DateTime.MinValue;
-    private DateTime _lastMpPress = DateTime.MinValue;
+    private FlaskChannel _hpChannel = new(null);
+    private FlaskChannel _esChannel = new(null);
+    private FlaskChannel _mpChannel = new(null);
     private PlayerVitals? _vitals;
     private string _status = "STOPPED";
     private string _lastAction = string.Empty;
@@ -34,13 +37,20 @@ public sealed class AutoFlaskEngine : IDisposable
         Poe1Reader reader,
         IKeySink input,
         IFocusProbe focus,
-        AutomationProfile profile)
+        AutomationProfile profile,
+        IAreaProbe? area = null)
     {
         _reader = reader;
         _input = input;
         _focus = focus;
         _profile = profile;
+        _area = area;
     }
+
+    /// <summary>Zone the automation is paused in, when it is paused by area.</summary>
+    public string? AreaLabel => _area is { IsAvailable: true } area
+        ? area.IsTransitioning ? "LOADING" : area.Area
+        : null;
 
     public int ProcessId => _reader.ProcessId;
 
@@ -62,7 +72,9 @@ public sealed class AutoFlaskEngine : IDisposable
         }
 
         _options = options;
-        _lastHpPress = _lastEsPress = _lastMpPress = DateTime.MinValue;
+        _hpChannel = new FlaskChannel(options.HpKey);
+        _esChannel = new FlaskChannel(options.EsKey);
+        _mpChannel = new FlaskChannel(options.MpKey);
         _cts = new CancellationTokenSource();
         _running = true;
         _loop = Task.Run(() => LoopAsync(_cts.Token));
@@ -78,6 +90,21 @@ public sealed class AutoFlaskEngine : IDisposable
         _cts?.Cancel();
         _running = false;
         SetStatus("STOPPED");
+    }
+
+    private bool ShouldPause(IAreaProbe area)
+    {
+        if (area.IsTransitioning)
+        {
+            return true;
+        }
+
+        return area.Kind switch
+        {
+            AreaKind.Town => _options.PauseInTown,
+            AreaKind.Hideout => _options.PauseInHideout,
+            _ => false,
+        };
     }
 
     public static bool ShouldPress(
@@ -124,6 +151,14 @@ public sealed class AutoFlaskEngine : IDisposable
                 var vitals = _reader.ReadVitals();
                 if (vitals is null)
                 {
+                    if (!_reader.IsProcessAlive)
+                    {
+                        SetStatus("GAME CLOSED · press START after reopening");
+                        _running = false;
+                        _cts?.Cancel();
+                        break;
+                    }
+
                     if (!_reader.TryAttach(out var error))
                     {
                         SetStatus($"ATTACH FAILED · {error}");
@@ -151,32 +186,37 @@ public sealed class AutoFlaskEngine : IDisposable
                     continue;
                 }
 
+                _area?.Poll();
+                if (_area is { IsAvailable: true } area && ShouldPause(area))
+                {
+                    SetStatus(area.IsTransitioning ? "PAUSED · LOADING" : $"PAUSED · {area.Kind.ToString().ToUpperInvariant()} · {area.Area}");
+                    await Task.Delay(250, cancellationToken);
+                    continue;
+                }
+
                 var now = DateTime.UtcNow;
                 if (_options.HpEnabled &&
-                    ShouldPress(value.Hp, value.MaxHp, _options.HpThreshold, now, _lastHpPress, _options.CooldownMs) &&
-                    !string.IsNullOrWhiteSpace(_options.HpKey))
+                    ShouldPress(value.Hp, value.MaxHp, _options.HpThreshold, now, _hpChannel.LastPress, _options.CooldownMs) &&
+                    _hpChannel.Press(now, _options.CooldownMs) is { } hpKey)
                 {
-                    _input.Press(_options.HpKey);
-                    _lastHpPress = now;
-                    SetAction($"HP FLASK · {value.Hp}/{value.MaxHp}");
+                    _input.Press(hpKey);
+                    SetAction($"HP FLASK {hpKey} · {value.Hp}/{value.MaxHp}");
                 }
 
                 if (_options.EsEnabled &&
-                    ShouldPress(value.Es, value.MaxEs, _options.EsThreshold, now, _lastEsPress, _options.CooldownMs) &&
-                    !string.IsNullOrWhiteSpace(_options.EsKey))
+                    ShouldPress(value.Es, value.MaxEs, _options.EsThreshold, now, _esChannel.LastPress, _options.CooldownMs) &&
+                    _esChannel.Press(now, _options.CooldownMs) is { } esKey)
                 {
-                    _input.Press(_options.EsKey);
-                    _lastEsPress = now;
-                    SetAction($"ES FLASK · {value.Es}/{value.MaxEs}");
+                    _input.Press(esKey);
+                    SetAction($"ES FLASK {esKey} · {value.Es}/{value.MaxEs}");
                 }
 
                 if (_options.MpEnabled &&
-                    ShouldPress(value.Mp, value.MaxMp, _options.MpThreshold, now, _lastMpPress, _options.CooldownMs) &&
-                    !string.IsNullOrWhiteSpace(_options.MpKey))
+                    ShouldPress(value.Mp, value.MaxMp, _options.MpThreshold, now, _mpChannel.LastPress, _options.CooldownMs) &&
+                    _mpChannel.Press(now, _options.CooldownMs) is { } mpKey)
                 {
-                    _input.Press(_options.MpKey);
-                    _lastMpPress = now;
-                    SetAction($"MP FLASK · {value.Mp}/{value.MaxMp}");
+                    _input.Press(mpKey);
+                    SetAction($"MP FLASK {mpKey} · {value.Mp}/{value.MaxMp}");
                 }
 
                 SetStatus($"RUNNING · HP {value.Hp}/{value.MaxHp} · ES {value.Es}/{value.MaxEs} · MP {value.Mp}/{value.MaxMp}");

@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using System.Diagnostics;
 using System.Text;
 
 namespace Hollowwork.Automation;
@@ -28,6 +29,27 @@ public sealed class Poe1Reader : IDisposable
 
     public bool IsAttached => _life != 0;
 
+    /// <summary>False once the game process exits; the reader cannot recover without reopening.</summary>
+    public bool IsProcessAlive
+    {
+        get
+        {
+            try
+            {
+                using var process = Process.GetProcessById(ProcessId);
+                return !process.HasExited;
+            }
+            catch (ArgumentException)
+            {
+                return false;
+            }
+            catch (InvalidOperationException)
+            {
+                return false;
+            }
+        }
+    }
+
     public static bool TryOpen(
         AutomationProfile profile,
         out Poe1Reader? reader,
@@ -37,13 +59,11 @@ public sealed class Poe1Reader : IDisposable
         try
         {
             var memory = ProcessMemoryFactory.Open(profile);
-            var candidate = new Poe1Reader(memory, profile);
-            if (!candidate.TryAttach(out error))
-            {
-                candidate.Dispose();
-                return false;
-            }
 
+            // Attach is best effort: at the login screen the player does not exist yet, and the
+            // engine retries on its own loop once an area is entered.
+            var candidate = new Poe1Reader(memory, profile);
+            candidate.TryAttach(out error);
             reader = candidate;
             return true;
         }

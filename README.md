@@ -101,6 +101,24 @@ still at login/character select.
 Automation is gameplay automation and violates the game's terms; account restrictions are
 possible. The current module only does auto-flask — no logout, skills, overlay or trade automation.
 
+### Area pause
+
+Flask keys are not sent in towns, in hideouts, or while the game changes zone. The engine follows
+`Client.txt` instead of new memory offsets: the game appends `: You have entered <area>.` on every
+zone change, so a game patch does not break it.
+
+Hollowwork looks for the log in the Proton prefix of app `238960`, across the Steam libraries
+listed in `libraryfolders.vdf`, and in a plain Wine prefix. When it finds nothing, the tab shows
+`AREA OFF · Client.txt not found` and keys keep working exactly as before — set the path in the
+field to enable it. Some installs only write the log when the game runs with `--log 1`.
+
+Town and hideout names come from the log, so they are matched in English: a client in another
+language is treated as a map and keys keep working.
+
+Each flask field takes one key or a list (`1,2`). A list alternates between the keys, which covers
+two flasks of the same resource. Charges are not read: when a flask is empty the client ignores the
+press and the next key in the list still gets its turn.
+
 ## Currency FLIP
 
 ![FLIP tab](docs/screenshot-flip.png)

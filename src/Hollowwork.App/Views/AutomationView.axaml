@@ -65,19 +65,19 @@
                     <Slider Grid.Row="0" Grid.Column="1" Minimum="1" Maximum="99"
                             Value="{Binding HpThreshold}" Margin="8,0" />
                     <TextBlock Grid.Row="0" Grid.Column="2" Classes="mono faint"
-                               Text="{Binding HpThreshold, StringFormat={}{0:0}%}" VerticalAlignment="Center" />
+                               Text="{Binding HpThresholdLabel}" VerticalAlignment="Center" />
 
                     <CheckBox Grid.Row="1" Content="ES" IsChecked="{Binding EsEnabled}" />
                     <Slider Grid.Row="1" Grid.Column="1" Minimum="1" Maximum="99"
                             Value="{Binding EsThreshold}" Margin="8,0" />
                     <TextBlock Grid.Row="1" Grid.Column="2" Classes="mono faint"
-                               Text="{Binding EsThreshold, StringFormat={}{0:0}%}" VerticalAlignment="Center" />
+                               Text="{Binding EsThresholdLabel}" VerticalAlignment="Center" />
 
                     <CheckBox Grid.Row="2" Content="MP" IsChecked="{Binding MpEnabled}" />
                     <Slider Grid.Row="2" Grid.Column="1" Minimum="1" Maximum="99"
                             Value="{Binding MpThreshold}" Margin="8,0" />
                     <TextBlock Grid.Row="2" Grid.Column="2" Classes="mono faint"
-                               Text="{Binding MpThreshold, StringFormat={}{0:0}%}" VerticalAlignment="Center" />
+                               Text="{Binding MpThresholdLabel}" VerticalAlignment="Center" />
                 </Grid>
             </StackPanel>
 
@@ -93,8 +93,25 @@
                 <TextBox Grid.Row="1" Grid.Column="3" Text="{Binding CooldownText}" MaxLength="6" />
             </Grid>
 
+            <TextBlock Classes="mono faint" FontSize="9" TextWrapping="Wrap"
+                       Text="Each field takes one key or a list: 1,2 alternates between two flasks of the same resource." />
+
             <CheckBox Content="Only send keys while the game is focused"
                       IsChecked="{Binding RequireFocus}" />
+
+            <Border Classes="rule" />
+
+            <StackPanel Spacing="6">
+                <TextBlock Classes="eyebrow" Text="AREA PAUSE" />
+                <CheckBox Content="Pause in town" IsChecked="{Binding PauseInTown}" />
+                <CheckBox Content="Pause in hideout" IsChecked="{Binding PauseInHideout}" />
+                <TextBox Text="{Binding ClientLogPath}" MaxLength="512"
+                         PlaceholderText="Client.txt path (auto-detected when empty)" />
+                <TextBlock Classes="mono faint" FontSize="9" TextWrapping="Wrap"
+                           Text="{Binding AreaText}" />
+                <TextBlock Classes="mono faint" FontSize="9" TextWrapping="Wrap"
+                           Text="Follows the game log. If the log cannot be found, keys keep working exactly as before." />
+            </StackPanel>
 
             <TextBlock Classes="mono faint" FontSize="9" TextWrapping="Wrap"
                        Text="Reads HP/ES/MP from the PoE1 process and sends the configured flask keys through X11. No AutoHotkey. Stop before changing characters or areas." />

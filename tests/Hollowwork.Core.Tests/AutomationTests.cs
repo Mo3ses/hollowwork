@@ -166,4 +166,134 @@ public class AutomationTests
         {
         }
     }
+
+    [Theory]
+    [InlineData("2026/11/16 09:31:22 123456789 abc [INFO Client 123] : You have entered Celestial Hideout.", "Celestial Hideout")]
+    [InlineData("2026/11/16 09:31:22 1 a [INFO Client 1] : You have entered The Sarn Encampment.", "The Sarn Encampment")]
+    public void Parses_the_area_from_a_log_line(string line, string expected)
+    {
+        Assert.Equal(expected, AreaWatcher.ParseArea(line));
+    }
+
+    [Theory]
+    [InlineData("2026/11/16 09:31:22 1 a [INFO Client 1] : Connecting to instance server at 127.0.0.1:6112.")]
+    [InlineData("2026/11/16 09:31:22 1 a [INFO Client 1] : AFK mode is now ON.")]
+    public void Ignores_lines_that_are_not_an_area_entry(string line)
+    {
+        Assert.Null(AreaWatcher.ParseArea(line));
+    }
+
+    [Theory]
+    [InlineData("Celestial Hideout", AreaKind.Hideout)]
+    [InlineData("Lioneye's Watch", AreaKind.Town)]
+    [InlineData("The Rogue Harbour", AreaKind.Town)]
+    [InlineData("Cemetery Map", AreaKind.Map)]
+    [InlineData(null, AreaKind.Unknown)]
+    public void Classifies_areas(string? area, AreaKind expected)
+    {
+        Assert.Equal(expected, AreaWatcher.Classify(area));
+    }
+
+    [Fact]
+    public void Follows_zone_changes_in_the_log()
+    {
+        var path = Path.GetTempFileName();
+        try
+        {
+            using var watcher = new AreaWatcher(path);
+            watcher.Poll();
+            Assert.True(watcher.IsAvailable);
+            Assert.Null(watcher.Area);
+
+            File.AppendAllText(path, "[INFO Client 1] : You have entered Cemetery Map.\n");
+            watcher.Poll();
+
+            Assert.Equal("Cemetery Map", watcher.Area);
+            Assert.Equal(AreaKind.Map, watcher.Kind);
+            Assert.False(watcher.IsTransitioning);
+
+            File.AppendAllText(path, "[INFO Client 1] : Connecting to instance server at 127.0.0.1:6112.\n");
+            watcher.Poll();
+            Assert.True(watcher.IsTransitioning);
+
+            File.AppendAllText(path, "[INFO Client 1] : You have entered Celestial Hideout.\n");
+            watcher.Poll();
+            Assert.False(watcher.IsTransitioning);
+            Assert.Equal(AreaKind.Hideout, watcher.Kind);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void Restarts_cleanly_when_the_log_is_truncated()
+    {
+        var path = Path.GetTempFileName();
+        try
+        {
+            using var watcher = new AreaWatcher(path);
+            watcher.Poll();
+
+            File.AppendAllText(path, "[INFO Client 1] : You have entered Cemetery Map.\n");
+            watcher.Poll();
+            Assert.Equal("Cemetery Map", watcher.Area);
+
+            // The game restarts and starts a fresh log.
+            File.WriteAllText(path, "[INFO Client 1] : You have entered The Sarn Encampment.\n");
+            watcher.Poll();
+
+            Assert.Equal("The Sarn Encampment", watcher.Area);
+            Assert.Equal(AreaKind.Town, watcher.Kind);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Theory]
+    [InlineData(5, 848, "5% · 42")]
+    [InlineData(40, 1450, "40% · 580")]
+    [InlineData(50, 0, "50%")]
+    public void Describes_a_threshold_in_points(double percent, int max, string expected)
+    {
+        Assert.Equal(expected, PlayerVitals.DescribeThreshold(percent, max));
+    }
+
+    [Fact]
+    public void Parses_a_key_list()
+    {
+        Assert.Equal(["1", "2"], FlaskChannel.Parse("1, 2;"));
+        Assert.Equal(["q", "F1"], FlaskChannel.Parse("q F1"));
+        Assert.Empty(FlaskChannel.Parse("   "));
+    }
+
+    [Fact]
+    public void Deduplicates_keys()
+    {
+        Assert.Equal(["1", "2"], FlaskChannel.Parse("1,1,2, 2"));
+    }
+
+    [Fact]
+    public void Rotates_keys_and_respects_the_cooldown()
+    {
+        var channel = new FlaskChannel("1,2");
+        var start = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
+        Assert.Equal("1", channel.Press(start, 1000));
+        Assert.Null(channel.Press(start.AddMilliseconds(500), 1000));
+        Assert.Equal("2", channel.Press(start.AddMilliseconds(1000), 1000));
+        Assert.Equal("1", channel.Press(start.AddMilliseconds(2000), 1000));
+    }
+
+    [Fact]
+    public void Empty_channel_never_presses()
+    {
+        var channel = new FlaskChannel(null);
+
+        Assert.True(channel.IsEmpty);
+        Assert.Null(channel.Press(DateTime.UtcNow, 0));
+    }
 }

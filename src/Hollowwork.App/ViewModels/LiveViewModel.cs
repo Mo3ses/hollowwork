@@ -11,6 +11,7 @@ public sealed class LiveViewModel : INotifyPropertyChanged, IDisposable
     private readonly AutomationProfile? _profile;
     private readonly string _profileError;
     private AutoFlaskEngine? _engine;
+    private AreaWatcher? _area;
     private bool _hpEnabled = true;
     private bool _esEnabled;
     private bool _mpEnabled = true;
@@ -22,6 +23,10 @@ public sealed class LiveViewModel : INotifyPropertyChanged, IDisposable
     private string _mpKey = "2";
     private string _cooldownText = "1000";
     private bool _requireFocus = true;
+    private bool _pauseInTown = true;
+    private bool _pauseInHideout = true;
+    private string _clientLogPath = string.Empty;
+    private string _areaText = "AREA · not watched";
     private string _statusText = "STOPPED";
     private string _lastAction = "Select START to attach to PoE1.";
     private string _hpText = "HP —";
@@ -30,6 +35,9 @@ public sealed class LiveViewModel : INotifyPropertyChanged, IDisposable
     private double _hpPercent;
     private double _esPercent;
     private double _mpPercent;
+    private int _maxHp;
+    private int _maxEs;
+    private int _maxMp;
     private bool _isRunning;
 
     public LiveViewModel()
@@ -46,6 +54,7 @@ public sealed class LiveViewModel : INotifyPropertyChanged, IDisposable
             StatusText = $"PROFILE ERROR · {exception.Message}";
         }
 
+        UpdateAreaHint();
         _timer = new DispatcherTimer(TimeSpan.FromMilliseconds(150), DispatcherPriority.Background, (_, _) => Refresh());
     }
 
@@ -72,20 +81,45 @@ public sealed class LiveViewModel : INotifyPropertyChanged, IDisposable
     public double HpThreshold
     {
         get => _hpThreshold;
-        set => Set(ref _hpThreshold, value);
+        set
+        {
+            if (Set(ref _hpThreshold, value))
+            {
+                OnPropertyChanged(nameof(HpThresholdLabel));
+            }
+        }
     }
 
     public double EsThreshold
     {
         get => _esThreshold;
-        set => Set(ref _esThreshold, value);
+        set
+        {
+            if (Set(ref _esThreshold, value))
+            {
+                OnPropertyChanged(nameof(EsThresholdLabel));
+            }
+        }
     }
 
     public double MpThreshold
     {
         get => _mpThreshold;
-        set => Set(ref _mpThreshold, value);
+        set
+        {
+            if (Set(ref _mpThreshold, value))
+            {
+                OnPropertyChanged(nameof(MpThresholdLabel));
+            }
+        }
     }
+
+    /// <summary>Slider value plus the pool it maps to, once the game reports a maximum.</summary>
+    public string HpThresholdLabel => ThresholdLabel(HpThreshold, _maxHp);
+
+    public string EsThresholdLabel => ThresholdLabel(EsThreshold, _maxEs);
+
+    public string MpThresholdLabel => ThresholdLabel(MpThreshold, _maxMp);
 
     public string HpKey
     {
@@ -115,6 +149,37 @@ public sealed class LiveViewModel : INotifyPropertyChanged, IDisposable
     {
         get => _requireFocus;
         set => Set(ref _requireFocus, value);
+    }
+
+    public bool PauseInTown
+    {
+        get => _pauseInTown;
+        set => Set(ref _pauseInTown, value);
+    }
+
+    public bool PauseInHideout
+    {
+        get => _pauseInHideout;
+        set => Set(ref _pauseInHideout, value);
+    }
+
+    /// <summary>Full path to <c>Client.txt</c>; empty means auto-discovery.</summary>
+    public string ClientLogPath
+    {
+        get => _clientLogPath;
+        set
+        {
+            if (Set(ref _clientLogPath, value) && !IsRunning)
+            {
+                UpdateAreaHint();
+            }
+        }
+    }
+
+    public string AreaText
+    {
+        get => _areaText;
+        private set => Set(ref _areaText, value);
     }
 
     public string StatusText
@@ -207,12 +272,19 @@ public sealed class LiveViewModel : INotifyPropertyChanged, IDisposable
 
         try
         {
+            _engine?.Dispose();
+            _engine = null;
+
             var input = new X11KeySink();
             var focus = new X11FocusProbe();
-            _engine = new AutoFlaskEngine(reader!, input, focus, _profile);
+            _area = new AreaWatcher(string.IsNullOrWhiteSpace(ClientLogPath) ? null : ClientLogPath.Trim());
+            _area.Poll();
+            _engine = new AutoFlaskEngine(reader!, input, focus, _profile, _area);
             _engine.Start(Options());
             IsRunning = true;
-            StatusText = $"RUNNING · PID {_engine.ProcessId}";
+            StatusText = _engine.IsAttached
+                ? $"RUNNING · PID {_engine.ProcessId}"
+                : $"WAITING FOR PLAYER · {error}";
             LastAction = "Attached. Flask keys are sent only while the game is focused.";
             _timer.Start();
         }
@@ -239,7 +311,10 @@ public sealed class LiveViewModel : INotifyPropertyChanged, IDisposable
         _engine?.Stop();
         _engine?.Dispose();
         _engine = null;
+        _area?.Dispose();
+        _area = null;
         IsRunning = false;
+        AreaText = "AREA · not watched";
         StatusText = "STOPPED";
         LastAction = "No keys are being sent.";
     }
@@ -249,6 +324,8 @@ public sealed class LiveViewModel : INotifyPropertyChanged, IDisposable
         _timer.Stop();
         _engine?.Dispose();
         _engine = null;
+        _area?.Dispose();
+        _area = null;
     }
 
     private AutoFlaskOptions Options()
@@ -265,7 +342,25 @@ public sealed class LiveViewModel : INotifyPropertyChanged, IDisposable
             EsKey,
             MpKey,
             cooldown,
-            RequireFocus);
+            RequireFocus,
+            PauseInTown,
+            PauseInHideout);
+    }
+
+    private static string ThresholdLabel(double percent, int max) =>
+        PlayerVitals.DescribeThreshold(percent, max);
+
+    private void UpdateThresholdLabels()
+    {
+        OnPropertyChanged(nameof(HpThresholdLabel));
+        OnPropertyChanged(nameof(EsThresholdLabel));
+        OnPropertyChanged(nameof(MpThresholdLabel));
+    }
+
+    private void UpdateAreaHint()
+    {
+        var path = string.IsNullOrWhiteSpace(_clientLogPath) ? AreaWatcher.Discover() : _clientLogPath.Trim();
+        AreaText = path is null ? "AREA OFF · Client.txt not found" : $"AREA · {path}";
     }
 
     private void Refresh()
@@ -275,7 +370,21 @@ public sealed class LiveViewModel : INotifyPropertyChanged, IDisposable
             return;
         }
 
+        if (!_engine.IsRunning && IsRunning)
+        {
+            // The game closed and the engine stopped itself.
+            IsRunning = false;
+            _timer.Stop();
+        }
+
         StatusText = _engine.StatusText;
+        AreaText = _area switch
+        {
+            { IsAvailable: true } => $"AREA · {_engine.AreaLabel ?? "—"}",
+            { Error: { } error } => $"AREA OFF · {error}",
+            _ => "AREA · not watched",
+        };
+
         var action = _engine.LastAction;
         if (!string.IsNullOrWhiteSpace(action))
         {
@@ -293,6 +402,14 @@ public sealed class LiveViewModel : INotifyPropertyChanged, IDisposable
         }
 
         var value = vitals.Value;
+        if (value.MaxHp != _maxHp || value.MaxEs != _maxEs || value.MaxMp != _maxMp)
+        {
+            _maxHp = value.MaxHp;
+            _maxEs = value.MaxEs;
+            _maxMp = value.MaxMp;
+            UpdateThresholdLabels();
+        }
+
         HpText = $"HP {value.Hp} / {value.MaxHp} ({value.HpPercent:0}%)";
         EsText = $"ES {value.Es} / {value.MaxEs} ({value.EsPercent:0}%)";
         MpText = $"MP {value.Mp} / {value.MaxMp} ({value.MpPercent:0}%)";
