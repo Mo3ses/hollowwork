@@ -279,7 +279,13 @@ public sealed class LiveViewModel : INotifyPropertyChanged, IDisposable
             var focus = new X11FocusProbe();
             _area = new AreaWatcher(string.IsNullOrWhiteSpace(ClientLogPath) ? null : ClientLogPath.Trim());
             _area.Poll();
-            _engine = new AutoFlaskEngine(reader!, input, focus, _profile, _area);
+            _engine = new AutoFlaskEngine(
+                reader!,
+                input,
+                focus,
+                _profile,
+                _area,
+                () => Poe1Reader.TryOpen(_profile, out var reopened, out _) ? reopened : null);
             _engine.Start(Options());
             IsRunning = true;
             StatusText = _engine.IsAttached

@@ -101,6 +101,11 @@ internal sealed class LinuxProcessMemory : IMemoryReader
     {
         var wanted = Path.GetFileName(processName);
 
+        // Wine can expose several processes whose argv[0] matches the game. The real client is the
+        // one holding most of the memory; picking the first match can land on a short-lived helper.
+        var best = -1;
+        var bestResident = -1L;
+
         foreach (var directory in Directory.EnumerateDirectories("/proc"))
         {
             if (!int.TryParse(Path.GetFileName(directory), out var pid))
@@ -118,11 +123,20 @@ internal sealed class LinuxProcessMemory : IMemoryReader
 
                 var end = Array.IndexOf(raw, (byte)0);
                 var first = System.Text.Encoding.UTF8.GetString(raw, 0, end < 0 ? raw.Length : end);
-                if (first.EndsWith(wanted, StringComparison.OrdinalIgnoreCase) ||
-                    first.EndsWith(Path.GetFileNameWithoutExtension(wanted), StringComparison.OrdinalIgnoreCase))
+                if (!first.EndsWith(wanted, StringComparison.OrdinalIgnoreCase) &&
+                    !first.EndsWith(Path.GetFileNameWithoutExtension(wanted), StringComparison.OrdinalIgnoreCase))
                 {
-                    return pid;
+                    continue;
                 }
+
+                var resident = ReadResidentPages(directory);
+                if (resident <= bestResident)
+                {
+                    continue;
+                }
+
+                bestResident = resident;
+                best = pid;
             }
             catch (IOException)
             {
@@ -132,7 +146,21 @@ internal sealed class LinuxProcessMemory : IMemoryReader
             }
         }
 
-        return null;
+        return best < 0 ? null : best;
+    }
+
+    private static long ReadResidentPages(string directory)
+    {
+        try
+        {
+            var statm = File.ReadAllText(Path.Combine(directory, "statm"));
+            var parts = statm.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            return parts.Length > 1 && long.TryParse(parts[1], out var resident) ? resident : 0;
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            return 0;
+        }
     }
 
     private static ulong? FindBaseAddress(int pid, string processName)
