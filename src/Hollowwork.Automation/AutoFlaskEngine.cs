@@ -24,7 +24,7 @@ public sealed class AutoFlaskEngine : IDisposable
     private readonly IAreaProbe? _area;
     private CancellationTokenSource? _cts;
     private Task? _loop;
-    private AutoFlaskOptions _options = new();
+    private volatile AutoFlaskOptions _options = new();
     private FlaskChannel _hpChannel = new(null);
     private FlaskChannel _esChannel = new(null);
     private FlaskChannel _mpChannel = new(null);
@@ -64,6 +64,9 @@ public sealed class AutoFlaskEngine : IDisposable
 
     public string LastAction => Volatile.Read(ref _lastAction);
 
+    /// <summary>Options the loop is using right now.</summary>
+    public AutoFlaskOptions Options => _options;
+
     public void Start(AutoFlaskOptions options)
     {
         if (_running)
@@ -78,6 +81,33 @@ public sealed class AutoFlaskEngine : IDisposable
         _cts = new CancellationTokenSource();
         _running = true;
         _loop = Task.Run(() => LoopAsync(_cts.Token));
+    }
+
+    /// <summary>
+    /// Applies slider and key changes to a running engine. Called from the UI thread; the loop
+    /// notices on its next cycle.
+    /// </summary>
+    public void UpdateOptions(AutoFlaskOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        var previous = _options;
+        _options = options;
+
+        if (!string.Equals(previous.HpKey, options.HpKey, StringComparison.Ordinal))
+        {
+            _hpChannel = new FlaskChannel(options.HpKey);
+        }
+
+        if (!string.Equals(previous.EsKey, options.EsKey, StringComparison.Ordinal))
+        {
+            _esChannel = new FlaskChannel(options.EsKey);
+        }
+
+        if (!string.Equals(previous.MpKey, options.MpKey, StringComparison.Ordinal))
+        {
+            _mpChannel = new FlaskChannel(options.MpKey);
+        }
     }
 
     public void Stop()
