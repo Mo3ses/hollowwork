@@ -100,7 +100,7 @@ public sealed class PatchParameterViewModel : INotifyPropertyChanged
 
     public string Formatted => IsColor
         ? ShaderColor.ToFloat4(ColorText)
-        : Value.ToString("F1", CultureInfo.InvariantCulture);
+        : Value.ToString("0.##", CultureInfo.InvariantCulture);
 
     public string Persisted => IsColor ? ColorText : Formatted;
 

@@ -1,7 +1,7 @@
 {
   "id": "poe1.map-reveal",
   "name": "Map revealed",
-  "description": "Raises the minimap visibility floor to the configured reveal level.",
+  "description": "Raises the minimap visibility floor. Below 1.0 the unexplored areas stay dimmer than the ones you walked.",
   "game": "poe1",
   "parameters": [
     {
@@ -25,6 +25,11 @@
     }
   ],
   "operations": [
+    {
+      "type": "replaceRegex",
+      "from": "res_color = max\\(res_color, [0-9.]+f?\\);",
+      "to": "res_color = max(res_color, {reveal});"
+    },
     {
       "type": "replace",
       "from": "res_color = float4(1.0f, 0.0f, 0.0f, 1.0f);",
