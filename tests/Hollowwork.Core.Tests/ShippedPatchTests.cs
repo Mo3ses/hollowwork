@@ -70,4 +70,53 @@ public class ShippedPatchTests
 
         return count;
     }
+
+    [Fact]
+    public void Map_reveal_inserts_the_floor_into_a_vanilla_shader()
+    {
+        using var archive = new MemoryArchive();
+        archive.AddText(
+            "shaders/minimap_visibility_pixel.hlsl",
+            "if(visibility_fully_revealed > 0.5f)\n\tres_color = float4(1.0f, 0.0f, 0.0f, 1.0f);\nif(visibility_walkable_revealed > 0.5f)\n");
+
+        var patch = LoadShipped("poe1.map-reveal");
+        var plan = new PatchPlanner().Plan(archive, [Select(patch, "0.35")]);
+
+        var file = Assert.Single(plan.Files);
+        Assert.Contains("res_color = max(res_color, 0.35);", file.UpdatedText);
+        Assert.Equal(1, CountOccurrences(file.UpdatedText, "res_color = max(res_color,"));
+    }
+
+    [Fact]
+    public void Map_reveal_updates_an_already_patched_shader()
+    {
+        using var archive = new MemoryArchive();
+        archive.AddText(
+            "shaders/minimap_visibility_pixel.hlsl",
+            "\tres_color = float4(1.0f, 0.0f, 0.0f, 1.0f);\n\tres_color = max(res_color, 1.0f);\n");
+
+        var patch = LoadShipped("poe1.map-reveal");
+        var plan = new PatchPlanner().Plan(archive, [Select(patch, "0.3")]);
+
+        var file = Assert.Single(plan.Files);
+        Assert.Contains("res_color = max(res_color, 0.3);", file.UpdatedText);
+        Assert.DoesNotContain("max(res_color, 1.0)", file.UpdatedText);
+    }
+
+    [Fact]
+    public void Map_reveal_is_idempotent()
+    {
+        using var archive = new MemoryArchive();
+        archive.AddText(
+            "shaders/minimap_visibility_pixel.hlsl",
+            "\tres_color = float4(1.0f, 0.0f, 0.0f, 1.0f);\n\tres_color = max(res_color, 0.3);\n");
+
+        var patch = LoadShipped("poe1.map-reveal");
+        var plan = new PatchPlanner().Plan(archive, [Select(patch, "0.3")]);
+
+        Assert.True(plan.IsEmpty);
+    }
+
+    private static PatchSelection Select(PatchDefinition patch, string reveal) =>
+        new(patch, new Dictionary<string, string> { ["reveal"] = reveal });
 }
