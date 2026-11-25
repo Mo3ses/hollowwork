@@ -17,11 +17,13 @@ public sealed record AutoFlaskOptions(
 
 public sealed class AutoFlaskEngine : IDisposable
 {
-    private readonly Poe1Reader _reader;
+    private Poe1Reader _reader;
     private readonly IKeySink _input;
     private readonly IFocusProbe _focus;
     private readonly AutomationProfile _profile;
     private readonly IAreaProbe? _area;
+    private readonly Func<Poe1Reader?>? _reopen;
+    private int _deadChecks;
     private CancellationTokenSource? _cts;
     private Task? _loop;
     private AutoFlaskOptions _options = new();
@@ -38,13 +40,15 @@ public sealed class AutoFlaskEngine : IDisposable
         IKeySink input,
         IFocusProbe focus,
         AutomationProfile profile,
-        IAreaProbe? area = null)
+        IAreaProbe? area = null,
+        Func<Poe1Reader?>? reopen = null)
     {
         _reader = reader;
         _input = input;
         _focus = focus;
         _profile = profile;
         _area = area;
+        _reopen = reopen;
     }
 
     /// <summary>Zone the automation is paused in, when it is paused by area.</summary>
@@ -90,6 +94,29 @@ public sealed class AutoFlaskEngine : IDisposable
         _cts?.Cancel();
         _running = false;
         SetStatus("STOPPED");
+    }
+
+    private bool TryReopen()
+    {
+        if (_reopen is null)
+        {
+            SetStatus("GAME CLOSED · press START after reopening");
+            _running = false;
+            _cts?.Cancel();
+            return false;
+        }
+
+        var replacement = _reopen();
+        if (replacement is null)
+        {
+            return false;
+        }
+
+        _reader.Dispose();
+        _reader = replacement;
+        _deadChecks = 0;
+        SetStatus("REATTACHED · waiting for the player");
+        return true;
     }
 
     private bool ShouldPause(IAreaProbe area)
@@ -153,10 +180,20 @@ public sealed class AutoFlaskEngine : IDisposable
                 {
                     if (!_reader.IsProcessAlive)
                     {
-                        SetStatus("GAME CLOSED · press START after reopening");
-                        _running = false;
-                        _cts?.Cancel();
-                        break;
+                        // Require a few consecutive misses: a transition can drop the process for
+                        // an instant without the game being gone.
+                        if (++_deadChecks < 3)
+                        {
+                            await Task.Delay(250, cancellationToken);
+                            continue;
+                        }
+
+                        if (!TryReopen())
+                        {
+                            SetStatus("WAITING FOR GAME · start Path of Exile again");
+                            await Task.Delay(1000, cancellationToken);
+                            continue;
+                        }
                     }
 
                     if (!_reader.TryAttach(out var error))
@@ -178,6 +215,7 @@ public sealed class AutoFlaskEngine : IDisposable
                 }
 
                 _vitals = value;
+                _deadChecks = 0;
 
                 if (_options.RequireFocus && !_focus.IsGameFocused(_profile.WindowTitle, _profile.WindowClass))
                 {
