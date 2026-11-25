@@ -15,8 +15,16 @@ public static class AutomationLog
         "logs",
         "automation.log");
 
+    private static readonly bool Enabled =
+        !AppDomain.CurrentDomain.FriendlyName.Contains("testhost", StringComparison.OrdinalIgnoreCase);
+
     public static void Write(string message)
     {
+        if (!Enabled)
+        {
+            return;
+        }
+
         lock (Gate)
         {
             try
