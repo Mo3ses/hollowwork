@@ -329,7 +329,20 @@ public sealed class AutoFlaskEngine : IDisposable
         }
     }
 
-    private void SetStatus(string status) => Volatile.Write(ref _status, status);
+    private string _lastStatusKey = string.Empty;
+
+    private void SetStatus(string status)
+    {
+        Volatile.Write(ref _status, status);
+
+        // The running line carries HP/MP numbers and changes constantly; log the state only.
+        var key = status.StartsWith("RUNNING", StringComparison.Ordinal) ? "RUNNING" : status;
+        if (!string.Equals(key, _lastStatusKey, StringComparison.Ordinal))
+        {
+            _lastStatusKey = key;
+            AutomationLog.Write($"status {key}");
+        }
+    }
 
     private void SetAction(string action) => Volatile.Write(ref _lastAction, action);
 }
