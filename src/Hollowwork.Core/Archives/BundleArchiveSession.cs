@@ -30,8 +30,14 @@ public sealed class BundleArchiveSession : IArchiveSession
         }
         catch (DllNotFoundException exception)
         {
+            var hint = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "Hollowwork",
+                "oo2core");
+
             throw new OodleLibraryNotFoundException(
-                "Oodle library failed to load. Set HOLLOWWORK_OODLE or place liboo2corelinux64.so.9 next to the executable.",
+                $"Oodle library failed to load. Put the file next to the executable, in {hint}, " +
+                "or point HOLLOWWORK_OODLE at it.",
                 exception);
         }
     }

@@ -15,6 +15,7 @@ public static class OodleLibrary
     private static readonly object Gate = new();
     private static readonly List<string> Candidates = [];
     private static bool _registered;
+    private static bool _userSearchDone;
     private static string? _resolvedPath;
 
     /// <summary>Path of the library that will be used, if it could be found.</summary>
@@ -22,6 +23,8 @@ public static class OodleLibrary
     {
         get
         {
+            Configure();
+
             lock (Gate)
             {
                 return _resolvedPath ?? FindCandidate();
@@ -141,6 +144,99 @@ public static class OodleLibrary
             {
                 yield return Path.Combine(dataDirectory, "Hollowwork", "oo2core", name);
             }
+        }
+
+        // Walk the user folders once: Configure runs on every resolution, and rescanning
+        // Downloads on each UI refresh would be wasteful.
+        if (!_userSearchDone)
+        {
+            _userSearchDone = true;
+
+            foreach (var discovered in DiscoveredNearUser())
+            {
+                yield return discovered;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Looks for a compatible library in the folders a user actually keeps downloads in. It is the
+    /// user's own copy; Hollowwork never ships or fetches one.
+    /// </summary>
+    private static IEnumerable<string> DiscoveredNearUser()
+    {
+        var profile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        var documents = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+        var desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+
+        var roots = new List<string>();
+        Add(roots, Path.Combine(profile, "Downloads"));
+        Add(roots, documents);
+        Add(roots, desktop);
+
+        foreach (var root in roots)
+        {
+            foreach (var file in FindInFolder(root))
+            {
+                yield return file;
+            }
+
+            foreach (var child in SafeSubdirectories(root))
+            {
+                foreach (var file in FindInFolder(child))
+                {
+                    yield return file;
+                }
+            }
+        }
+    }
+
+    private static void Add(List<string> roots, string path)
+    {
+        if (!string.IsNullOrWhiteSpace(path) && Directory.Exists(path) && !roots.Contains(path, StringComparer.Ordinal))
+        {
+            roots.Add(path);
+        }
+    }
+
+    private static IEnumerable<string> FindInFolder(string directory)
+    {
+        foreach (var name in PlatformNames())
+        {
+            string[] files;
+            try
+            {
+                files = Directory.GetFiles(directory, name, SearchOption.TopDirectoryOnly);
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+            {
+                continue;
+            }
+
+            foreach (var file in files)
+            {
+                yield return file;
+            }
+        }
+    }
+
+    private static IEnumerable<string> SafeSubdirectories(string directory)
+    {
+        const int limit = 400;
+
+        string[] children;
+        try
+        {
+            children = Directory.GetDirectories(directory);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            yield break;
+        }
+
+        for (var index = 0; index < children.Length && index < limit; index++)
+        {
+            yield return children[index];
         }
     }
 
