@@ -383,6 +383,10 @@ public sealed class LiveViewModel : INotifyPropertyChanged, IDisposable
             _timer.Stop();
         }
 
+        // Sliders and key fields apply while the engine runs; without this, a change only took
+        // effect after STOP/START.
+        _engine.UpdateOptions(Options());
+
         StatusText = _engine.StatusText;
         AreaText = _area switch
         {

@@ -296,4 +296,38 @@ public class AutomationTests
         Assert.True(channel.IsEmpty);
         Assert.Null(channel.Press(DateTime.UtcNow, 0));
     }
+
+    [Fact]
+    public void Updates_options_while_running()
+    {
+        var profile = AutomationProfile.Load(
+            Path.Combine(AppContext.BaseDirectory, "automation", "poe1.json"));
+        using var reader = new Poe1Reader(new FakeMemory(0x100000, 0x1000), profile);
+        using var engine = new AutoFlaskEngine(reader, new NoopKeySink(), new NoopFocusProbe(), profile);
+
+        engine.UpdateOptions(new AutoFlaskOptions(MpThreshold: 0.042, MpKey: "5"));
+
+        Assert.Equal(0.042, engine.Options.MpThreshold);
+        Assert.Equal("5", engine.Options.MpKey);
+    }
+
+    private sealed class NoopKeySink : IKeySink
+    {
+        public void Press(string key)
+        {
+        }
+
+        public void Dispose()
+        {
+        }
+    }
+
+    private sealed class NoopFocusProbe : IFocusProbe
+    {
+        public bool IsGameFocused(string windowTitle, string windowClass) => true;
+
+        public void Dispose()
+        {
+        }
+    }
 }
