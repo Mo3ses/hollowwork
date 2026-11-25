@@ -54,6 +54,7 @@ public sealed class AreaWatcher : IAreaProbe, IDisposable
     private const string ConnectingMarker = "Connecting to instance server";
     private const string DisconnectedMarker = "You have been disconnected";
     private const int HeadLength = 64;
+    private static readonly TimeSpan TransitionWindow = TimeSpan.FromSeconds(20);
 
     private readonly string? _configuredPath;
     private readonly StringBuilder _pending = new();
@@ -61,6 +62,9 @@ public sealed class AreaWatcher : IAreaProbe, IDisposable
     private string? _path;
     private string _head = string.Empty;
     private long _position;
+    private DateTime _transitionAt = DateTime.MinValue;
+    private bool _transitioning;
+    private bool _everOpened;
 
     public AreaWatcher(string? clientLogPath = null)
     {
@@ -71,7 +75,12 @@ public sealed class AreaWatcher : IAreaProbe, IDisposable
 
     public string? Area { get; private set; }
 
-    public bool IsTransitioning { get; private set; }
+    /// <summary>
+    /// True while a zone change is underway. Bounded in time: a missed log line must not pause the
+    /// engine forever.
+    /// </summary>
+    public bool IsTransitioning =>
+        _transitioning && DateTime.UtcNow - _transitionAt < TransitionWindow;
 
     public bool IsAvailable => _stream is not null;
 
@@ -84,7 +93,9 @@ public sealed class AreaWatcher : IAreaProbe, IDisposable
 
     public void Poll()
     {
-        if (_stream is null && !Open(fromEnd: true))
+        // The first open skips history; a reopen after the file vanished replays it, because the
+        // zone change line may have been written while the handle was gone.
+        if (_stream is null && !Open(fromEnd: !_everOpened))
         {
             return;
         }
@@ -95,7 +106,9 @@ public sealed class AreaWatcher : IAreaProbe, IDisposable
             // it. Ask the filesystem, then compare the first bytes: a shrunken or rewritten log
             // means a new session, so start over.
             var length = new FileInfo(_path!).Length;
-            if (length < _position || !HeadMatches())
+            var replaced = length != _position && !PathHeadMatches();
+
+            if (length < _position || replaced)
             {
                 if (!Open(fromEnd: false))
                 {
@@ -329,6 +342,7 @@ public sealed class AreaWatcher : IAreaProbe, IDisposable
             _path = path;
             _pending.Clear();
             _head = ReadHead();
+            _everOpened = true;
             _position = fromEnd ? _stream.Length : 0;
             Source = path;
             Error = null;
@@ -360,23 +374,39 @@ public sealed class AreaWatcher : IAreaProbe, IDisposable
         return Encoding.UTF8.GetString(buffer, 0, read);
     }
 
-    private bool HeadMatches()
+    /// <summary>
+    /// Compares the file currently on disk with the snapshot we are tailing. A fresh handle is used
+    /// on purpose: the stream may point at an inode the game already replaced.
+    /// </summary>
+    private bool PathHeadMatches()
     {
-        if (_stream is null)
+        if (_path is null)
         {
-            return false;
+            return true;
         }
 
-        var count = (int)Math.Min(HeadLength, new FileInfo(_path!).Length);
-        if (count == 0)
+        try
         {
-            return _head.Length == 0;
-        }
+            using var probe = new FileStream(
+                _path,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.ReadWrite | FileShare.Delete);
 
-        var buffer = new byte[count];
-        _stream.Seek(0, SeekOrigin.Begin);
-        var read = _stream.Read(buffer, 0, count);
-        return Encoding.UTF8.GetString(buffer, 0, read) == _head;
+            var count = (int)Math.Min(HeadLength, probe.Length);
+            if (count == 0)
+            {
+                return _head.Length == 0;
+            }
+
+            var buffer = new byte[count];
+            var read = probe.Read(buffer, 0, count);
+            return Encoding.UTF8.GetString(buffer, 0, read) == _head;
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            return true;
+        }
     }
 
     private void ConsumeLines()
@@ -403,14 +433,15 @@ public sealed class AreaWatcher : IAreaProbe, IDisposable
         {
             Area = area;
             Kind = Classify(area);
-            IsTransitioning = false;
+            _transitioning = false;
             return;
         }
 
         if (line.Contains(ConnectingMarker, StringComparison.Ordinal) ||
             line.Contains(DisconnectedMarker, StringComparison.Ordinal))
         {
-            IsTransitioning = true;
+            _transitioning = true;
+            _transitionAt = DateTime.UtcNow;
         }
     }
 }
