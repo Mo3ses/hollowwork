@@ -329,6 +329,7 @@ public sealed class AreaWatcher : IAreaProbe, IDisposable
             _path = path;
             _pending.Clear();
             _head = ReadHead();
+            AutomationLog.Write($"log open {path} from={(fromEnd ? "end" : "start")} bytes={_stream.Length}");
             _position = fromEnd ? _stream.Length : 0;
             Source = path;
             Error = null;
@@ -404,6 +405,7 @@ public sealed class AreaWatcher : IAreaProbe, IDisposable
             Area = area;
             Kind = Classify(area);
             IsTransitioning = false;
+            AutomationLog.Write($"area {area} ({Kind})");
             return;
         }
 
@@ -411,6 +413,7 @@ public sealed class AreaWatcher : IAreaProbe, IDisposable
             line.Contains(DisconnectedMarker, StringComparison.Ordinal))
         {
             IsTransitioning = true;
+            AutomationLog.Write($"transition line: {line.Trim()}");
         }
     }
 }
