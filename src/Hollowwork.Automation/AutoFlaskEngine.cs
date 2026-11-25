@@ -49,6 +49,7 @@ public sealed class AutoFlaskEngine : IDisposable
         _profile = profile;
         _area = area;
         _reopen = reopen;
+        AutomationLog.Write($"engine created pid={reader.ProcessId} attached={reader.IsAttached}");
     }
 
     /// <summary>Zone the automation is paused in, when it is paused by area.</summary>
@@ -82,6 +83,7 @@ public sealed class AutoFlaskEngine : IDisposable
         _hpChannel = new FlaskChannel(options.HpKey);
         _esChannel = new FlaskChannel(options.EsKey);
         _mpChannel = new FlaskChannel(options.MpKey);
+        AutomationLog.Write($"start hp={options.HpEnabled}:{options.HpKey} mp={options.MpEnabled}:{options.MpKey} es={options.EsEnabled}:{options.EsKey}");
         _cts = new CancellationTokenSource();
         _running = true;
         _loop = Task.Run(() => LoopAsync(_cts.Token));
@@ -121,9 +123,24 @@ public sealed class AutoFlaskEngine : IDisposable
             return;
         }
 
+        AutomationLog.Write("stop requested");
         _cts?.Cancel();
         _running = false;
         SetStatus("STOPPED");
+    }
+
+    private string? _lastPause;
+
+    private void LogPause(IAreaProbe area)
+    {
+        var label = area.IsTransitioning ? "loading" : $"{area.Kind}:{area.Area}";
+        if (_lastPause == label)
+        {
+            return;
+        }
+
+        _lastPause = label;
+        AutomationLog.Write($"pausing ({label})");
     }
 
     private bool TryReopen()
@@ -145,6 +162,7 @@ public sealed class AutoFlaskEngine : IDisposable
         _reader.Dispose();
         _reader = replacement;
         _deadChecks = 0;
+        AutomationLog.Write($"reopened pid={replacement.ProcessId} attached={replacement.IsAttached}");
         SetStatus("REATTACHED · waiting for the player");
         return true;
     }
@@ -218,6 +236,8 @@ public sealed class AutoFlaskEngine : IDisposable
                             continue;
                         }
 
+                        AutomationLog.Write("process gone");
+
                         if (!TryReopen())
                         {
                             SetStatus("WAITING FOR GAME · start Path of Exile again");
@@ -244,6 +264,12 @@ public sealed class AutoFlaskEngine : IDisposable
                     continue;
                 }
 
+                if (_lastPause is not null)
+                {
+                    AutomationLog.Write($"resuming (area={_area?.Area ?? "unknown"})");
+                    _lastPause = null;
+                }
+
                 _vitals = value;
                 _deadChecks = 0;
 
@@ -257,6 +283,7 @@ public sealed class AutoFlaskEngine : IDisposable
                 _area?.Poll();
                 if (_area is { IsAvailable: true } area && ShouldPause(area))
                 {
+                    LogPause(area);
                     SetStatus(area.IsTransitioning ? "PAUSED · LOADING" : $"PAUSED · {area.Kind.ToString().ToUpperInvariant()} · {area.Area}");
                     await Task.Delay(250, cancellationToken);
                     continue;
